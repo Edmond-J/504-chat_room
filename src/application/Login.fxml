@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Login">
+   <children>
+      <TextField fx:id="userName" layoutX="175.0" layoutY="79.0" promptText="user name" />
+      <TextField fx:id="password" layoutX="175.0" layoutY="135.0" promptText="password" />
+      <Button layoutX="100.0" layoutY="207.0" mnemonicParsing="false" onAction="#login" prefWidth="80.0" text="Login" />
+      <Button layoutX="221.0" layoutY="207.0" mnemonicParsing="false" onAction="#loadChatPage" prefWidth="80.0" text="Sign Up(not yet)" />
+      <ImageView fitHeight="80.0" fitWidth="80.0" layoutX="65.0" layoutY="79.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../img/rabbit.png" />
+         </image>
+      </ImageView>
+      <Label layoutX="174.0" layoutY="55.0" text="User Name" />
+      <Label layoutX="175.0" layoutY="111.0" text="Password" />
+   </children>
+</AnchorPane>
