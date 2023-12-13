@@ -7,6 +7,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 
 public class Chat {
+	
 	@FXML
 	private ImageView CurrentAvatar, CurrentAvatar1;
 	@FXML
@@ -16,11 +17,10 @@ public class Chat {
 	@FXML
 	private ListView<?> UserLIst;
 
-	public Chat() {
-	}
 
 	@FXML
 	public void sendMessage() {
+		
 	}
 	
 }

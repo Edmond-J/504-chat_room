@@ -9,19 +9,20 @@ import cipher.RSA;
 
 public class Server {
 	int port;
-	int rsaBit;
-	String configPath;
+	static int rsaBit;
+	static String configPath;
 
 	public Server() throws IOException {
-		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
+		configPath = System.getProperty("user.home")+"\\EdmondChatRoomServer\\";
 		readConfig();
 		checkRSAKeys();
-//		setupServer();
+		setupServer();
 	}
 
 	public void setupServer() {
 		try (ServerSocket serverSocket = new ServerSocket(port)) {
 			while (true) {
+				System.out.println("thread started");
 				Socket socket = serverSocket.accept();
 				ServerThread s = new ServerThread(socket);
 				s.start();
@@ -35,22 +36,17 @@ public class Server {
 		File file1 = new File(configPath+"rsa\\publicKey");
 		File file2 = new File(configPath+"rsa\\privateKey");
 		if (!file1.exists() || !file2.exists()) {
-			try {
-				RSA rsa = new RSA(rsaBit);
-				rsa.createKeys();
-				rsa.writeKeyToFile(configPath+"rsa\\publicKey", rsa.getPublicKey().getEncoded());
-				rsa.writeKeyToFile(configPath+"rsa\\privateKey", rsa.getPrivateKey().getEncoded());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			RSA rsa = new RSA(rsaBit);
+			RSA.writeByteToFile(file1, rsa.getPublicKey().getEncoded());
+			RSA.writeByteToFile(file2, rsa.getPrivateKey().getEncoded());
 		}
 	}
 
 	private void readConfig() {
-		File file = new File(configPath+"\\config.txt");
+		File file = new File(configPath+"config.txt");
 		if (!file.exists()) {
 			//需要从文件中读取
-			port = 6068;
+			port = 6069;
 			rsaBit = 1024;
 		}
 	}
