@@ -15,7 +15,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
+import cipher.AES;
 import cipher.RSA;
+import dataStructure.Friend;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -23,7 +25,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
-import server.User;
 
 public class Login implements Initializable {
 	static String serverName;
@@ -31,9 +32,9 @@ public class Login implements Initializable {
 	static String configPath;
 	static String algorithm;
 	static int bit;
-	Socket client;
-	PrintWriter out;
-	BufferedReader in;
+	static Socket client;
+	static PrintWriter out;
+	static BufferedReader in;
 	@FXML
 	TextField userName, password;
 	@FXML
@@ -41,6 +42,8 @@ public class Login implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		userName.setText("jam");
+		password.setText("jam");
 		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
 		readConfig();
 		try {
@@ -73,18 +76,13 @@ public class Login implements Initializable {
 			System.out.println("user name or password can't be empty");
 			return;
 		}
-		try {
-			System.out.println("Connecting to server："+serverName+" ，port："+serverPort);
-			System.out.println("Local socket："+client.getLocalSocketAddress());
-			File file = new File(configPath+"server_rsa\\public");
-			if (!file.exists()) {
-				requireKey(client);
-			}
-			validate(client);
-			client.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		System.out.println("Connecting to server："+serverName+" ，port："+serverPort);
+		System.out.println("Local socket："+client.getLocalSocketAddress());
+		File file = new File(configPath+"server_rsa\\public");
+		if (!file.exists()) {
+			requireKey(client);
 		}
+		validate(client);
 	}
 
 	private void requireKey(Socket client) {
@@ -110,16 +108,19 @@ public class Login implements Initializable {
 
 	private void validate(Socket client) {
 		try {
-			JsonObject messageObject = new JsonObject();
-			messageObject.addProperty("req_type", "validate");
-			messageObject.addProperty("user", userName.getText());
-			messageObject.addProperty("password", password.getText());
+			JsonObject message = new JsonObject();
+			message.addProperty("user", userName.getText());
+			message.addProperty("password", password.getText());
 //			messageObject.addProperty("algorithm", algorithm);
 //			messageObject.addProperty("bit", bit);
 //			messageObject.addProperty("key", bit);
 			Gson gson = new Gson();
-			String toSend = gson.toJson(messageObject);
-			out.println(RSA.encrypt(toSend, RSA.getPublicFromFile(configPath+"rsa_server\\publicKey")));
+			String bodyTx = gson.toJson(message);
+			String bodyTxEn = RSA.encrypt(bodyTx, RSA.getPublicFromFile(configPath+"rsa_server\\publicKey"));
+			JsonObject jsonToSend = new JsonObject();
+			jsonToSend.addProperty("req_type", "validate");
+			jsonToSend.addProperty("body", bodyTxEn);
+			out.println(gson.toJson(jsonToSend));
 			// 发送用户名密码
 			String response = in.readLine();
 			// 需要用AES解密
@@ -127,19 +128,23 @@ public class Login implements Initializable {
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
 			if (resType.contains("200")) {
-				String token = jsonObject.get("token").getAsString();
-				String friends = jsonObject.get("friends").getAsString();
-				Type listType = new TypeToken<ArrayList<User>>() {
+				String bodyRx = jsonObject.get("body").getAsString();
+				String bodyRxDe = AES.fakeDecryption(bodyRx);
+				JsonObject jsonBodyRx = gson.fromJson(bodyRxDe, JsonObject.class);
+				String token = jsonBodyRx.get("token").getAsString();
+				String currentUser = jsonBodyRx.get("user").getAsString();
+				String friends = jsonBodyRx.get("friends").getAsString();
+				Type listType = new TypeToken<ArrayList<Friend>>() {
 				}.getType();
-				ArrayList<User> friendList = gson.fromJson(friends, listType);
-				loadChatPage(token, friendList);
+				ArrayList<Friend> friendList = gson.fromJson(friends, listType);
+				loadChatPage(currentUser, token, friendList);
 				System.out.println("login succeed");
 			} else if (resType.contains("300")) {
 				System.out.println("no such user or user name and password not match");
 			} else if (resType.contains("400")) {
 				System.out.println("too much attamptions, please try later");
 			} else System.out.println("server has no response");
-			in.close();
+//			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -155,10 +160,22 @@ public class Login implements Initializable {
 //		// 收到token则启动聊天界面
 //	}
 
-	private void loadChatPage(String token, ArrayList<User> friendList) {
-		Stage stage = (Stage)userName.getScene().getWindow();// 必须从一个节点获取
-		stage.close();
-		Chat chatController=new Chat(token,friendList);
-		chatController.show();
+	private void loadChatPage(String currentUser, String token, ArrayList<Friend> friendList) {
+		try {
+			Stage stage = (Stage)userName.getScene().getWindow();// 必须从一个节点获取
+			stage.close();
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatRoom.fxml"));
+			Scene scene = new Scene(loader.load());
+			Chat chatController = loader.getController();
+			chatController.setCurrentUser(currentUser);
+			chatController.setToken(token);
+			chatController.buildUI(friendList);
+			chatController.setupPortListener();
+			Stage newStage = new Stage();
+			newStage.setScene(scene);
+			newStage.show();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

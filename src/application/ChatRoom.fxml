@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Chat">
   <columnConstraints>
     <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="457.14288330078125" minWidth="10.0" prefWidth="457.14288330078125" />
     <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="NEVER" maxWidth="150.0" minWidth="150.0" prefWidth="150.0" />
@@ -28,48 +28,62 @@
    <children>
       <HBox alignment="CENTER_LEFT" prefHeight="40.0" prefWidth="600.0" spacing="10.0" style="-fx-background-color: gray;" GridPane.columnSpan="2147483647" GridPane.hgrow="ALWAYS">
          <children>
-            <ImageView fx:id="CurrentAvatar" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
-               <HBox.margin>
-                  <Insets />
-               </HBox.margin>
-               <image>
-                  <Image url="@../../../../../Pictures/png%20icon/rabbit.png" />
-               </image>
-            </ImageView>
-            <Label fx:id="CurrentName" text="User Name" textFill="WHITE">
+            <Label prefHeight="30.0" prefWidth="33.0" text="to :" textFill="WHITE">
                <font>
                   <Font name="Centaur" size="24.0" />
                </font>
             </Label>
-            <Pane prefHeight="50.0" prefWidth="350.0" HBox.hgrow="ALWAYS" />
-            <ImageView fx:id="CurrentAvatar1" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+            <Label fx:id="destUser" prefHeight="30.0" prefWidth="118.0" text="Peer User" textFill="WHITE">
+               <font>
+                  <Font name="Centaur" size="24.0" />
+               </font>
+            </Label>
+            <Pane prefHeight="50.0" prefWidth="279.0" HBox.hgrow="ALWAYS" />
+            <ImageView fx:id="setting" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../../img/settings.png" />
                </image>
             </ImageView>
          </children>
          <padding>
-            <Insets left="10.0" right="10.0" />
+            <Insets left="15.0" right="15.0" />
          </padding>
       </HBox>
-      <TextArea fx:id="TalkHistory" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
+      <TextArea fx:id="talkHistory" editable="false" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
          <GridPane.margin>
             <Insets left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
       </TextArea>
-      <TextArea fx:id="Editor" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2">
+      <TextArea fx:id="editor" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2">
          <GridPane.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
       </TextArea>
       <VBox prefHeight="351.0" prefWidth="140.0" spacing="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.rowSpan="2147483647">
          <children>
-            <Label text="Active Users: ">
+            <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+               <children>
+                  <ImageView fx:id="currentAvatar" fitHeight="35.0" fitWidth="35.0" pickOnBounds="true" preserveRatio="true">
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                     <image>
+                        <Image url="@../../../../../Pictures/png%20icon/rabbit.png" />
+                     </image>
+                  </ImageView>
+                  <Label fx:id="sourceUser" prefHeight="30.0" prefWidth="118.0" text="User Name">
+                     <font>
+                        <Font name="Centaur" size="20.0" />
+                     </font>
+                  </Label>
+               </children>
+            </HBox>
+            <Label fx:id="userCount" text="Active Friends: ">
                <VBox.margin>
                   <Insets />
                </VBox.margin>
             </Label>
-            <ListView fx:id="UserList" prefHeight="267.0" prefWidth="140.0" VBox.vgrow="ALWAYS" />
+            <ListView fx:id="userList" prefHeight="267.0" prefWidth="140.0" VBox.vgrow="ALWAYS" />
             <HBox alignment="TOP_CENTER" prefHeight="4.0" prefWidth="140.0">
                <children>
                   <Button mnemonicParsing="false" onAction="#sendMessage" prefWidth="55.0" text="Send" />

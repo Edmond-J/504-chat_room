@@ -3,11 +3,14 @@ package database;
 import server.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+
+import dataStructure.User;
 
 public class DBLogin {
 	static String jdbc_url = "jdbc:mysql://localhost:3306/edmond_chat_room";
@@ -67,8 +70,8 @@ public class DBLogin {
 		try {
 			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
 			Statement statement = connection.createStatement();
-			String query = "SELECT * FROM `users` WHERE 1";
-			ResultSet rs = statement.executeQuery(query);
+			String sql = "SELECT * FROM `users` WHERE 1";
+			ResultSet rs = statement.executeQuery(sql);
 			while (rs.next()) {
 				User userObj = new User(rs.getString("username"));
 				allUsers.add(userObj);
@@ -79,8 +82,45 @@ public class DBLogin {
 		return allUsers;
 	}
 
+	static public boolean checkEncryption(String username) {
+		try {
+			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
+//			Statement statement = connection.createStatement();
+			String sql = "SELECT  `encrypted` FROM `users` WHERE username=?";
+			PreparedStatement statement = connection.prepareStatement(sql);
+			statement.setString(1, username);
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				boolean result = rs.getBoolean("encrypted");
+				return result;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	static public String getMessagePw(String username) {
+		try {
+			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
+//			Statement statement = connection.createStatement();
+			String sql = "SELECT  `message_pw` FROM `users` WHERE username=?";
+			PreparedStatement statement = connection.prepareStatement(sql);
+			statement.setString(1, username);
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				String result = rs.getString("message_pw");
+				return result;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+
 	public static void main(String[] args) {
 //		new DBLogin();
-		System.out.println(validate("jam", "dd"));
+//		System.out.println(validate("jam", "dd"));
+		System.out.println(checkEncryption("jam"));
 	}
 }

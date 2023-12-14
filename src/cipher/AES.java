@@ -16,7 +16,7 @@ public class AES {
 	/**
 	* 随机生成秘钥
 	*/
-	public static void getKey() {
+	static public void getKey() {
 		try {
 			KeyGenerator kg = KeyGenerator.getInstance("AES");
 			kg.init(128);
@@ -31,7 +31,7 @@ public class AES {
 	/**
 	* 使用指定的字符串生成秘钥
 	*/
-	public static void getKeyByPass(String password) {
+	static public void getKeyByPass(String password) {
 		// 生成秘钥
 		try {
 			KeyGenerator kg = KeyGenerator.getInstance("AES");
@@ -43,6 +43,14 @@ public class AES {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
+	}
+
+	static public String fakeEncryption(String message) {
+		return message;
+	}
+	
+	static public String fakeDecryption(String message) {
+		return message;
 	}
 
 	public static void main(String[] args) {

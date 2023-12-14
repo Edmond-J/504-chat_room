@@ -13,7 +13,6 @@ public class ChatRoomLauncher extends Application {
 		try {
 			Parent login = FXMLLoader.load(getClass().getResource("Login.fxml"));
 			Scene scene = new Scene(login, 400, 300);
-			System.out.println("scene");
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.show();

@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import cipher.RSA;
+import dataStructure.User;
 
 public class Server {
+	static ArrayList<User> onlineUsers = new ArrayList<>();
 	int port;
 	static int rsaBit;
 	static String configPath;
