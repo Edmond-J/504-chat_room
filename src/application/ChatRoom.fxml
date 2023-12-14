@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Chat">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
   <columnConstraints>
     <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="457.14288330078125" minWidth="10.0" prefWidth="457.14288330078125" />
     <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="NEVER" maxWidth="150.0" minWidth="150.0" prefWidth="150.0" />
@@ -69,7 +69,7 @@
                   <Insets />
                </VBox.margin>
             </Label>
-            <ListView fx:id="UserLIst" prefHeight="267.0" prefWidth="140.0" VBox.vgrow="ALWAYS" />
+            <ListView fx:id="UserList" prefHeight="267.0" prefWidth="140.0" VBox.vgrow="ALWAYS" />
             <HBox alignment="TOP_CENTER" prefHeight="4.0" prefWidth="140.0">
                <children>
                   <Button mnemonicParsing="false" onAction="#sendMessage" prefWidth="55.0" text="Send" />

@@ -5,33 +5,35 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.URL;
-import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import cipher.RSA;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import server.User;
 
 public class Login implements Initializable {
 	static String serverName;
 	static int serverPort;
+	static String configPath;
+	static String algorithm;
+	static int bit;
 	Socket client;
 	PrintWriter out;
 	BufferedReader in;
-	String configPath;
-	String algorithm;
-	int bit;
 	@FXML
 	TextField userName, password;
 	@FXML
@@ -116,18 +118,25 @@ public class Login implements Initializable {
 //			messageObject.addProperty("bit", bit);
 //			messageObject.addProperty("key", bit);
 			Gson gson = new Gson();
-			String toSend=gson.toJson(messageObject);
+			String toSend = gson.toJson(messageObject);
 			out.println(RSA.encrypt(toSend, RSA.getPublicFromFile(configPath+"rsa_server\\publicKey")));
 			// 发送用户名密码
-			String result = in.readLine();
-			System.out.println(result);
-			if (result.contains("200")) {
-				// 读取token, friend list
-				// 启动聊天界面
+			String response = in.readLine();
+			// 需要用AES解密
+			System.out.println(response);
+			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
+			String resType = jsonObject.get("res_type").getAsString();
+			if (resType.contains("200")) {
+				String token = jsonObject.get("token").getAsString();
+				String friends = jsonObject.get("friends").getAsString();
+				Type listType = new TypeToken<ArrayList<User>>() {
+				}.getType();
+				ArrayList<User> friendList = gson.fromJson(friends, listType);
+				loadChatPage(token, friendList);
 				System.out.println("login succeed");
-			} else if (result.contains("300")) {
+			} else if (resType.contains("300")) {
 				System.out.println("no such user or user name and password not match");
-			} else if (result.contains("400")) {
+			} else if (resType.contains("400")) {
 				System.out.println("too much attamptions, please try later");
 			} else System.out.println("server has no response");
 			in.close();
@@ -146,21 +155,10 @@ public class Login implements Initializable {
 //		// 收到token则启动聊天界面
 //	}
 
-	@FXML
-	private void loadChatPage() {
-		Parent chatBox;
-		try {
-			Stage stage = (Stage)userName.getScene().getWindow();// 必须从一个节点获取
-			stage.close();
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatRoom.fxml"));
-			chatBox = loader.load();
-			Chat chatCon = loader.getController();
-			Scene scene = new Scene(chatBox);
-			Stage newStage = new Stage();
-			newStage.setScene(scene);
-			newStage.show();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	private void loadChatPage(String token, ArrayList<User> friendList) {
+		Stage stage = (Stage)userName.getScene().getWindow();// 必须从一个节点获取
+		stage.close();
+		Chat chatController=new Chat(token,friendList);
+		chatController.show();
 	}
 }

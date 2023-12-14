@@ -9,6 +9,7 @@ public class User {
 	String key;
 
 	public User(String name) {
+		username=name;
 	}
 
 	public User(String username, String token, String key) {
@@ -38,8 +39,10 @@ public class User {
 		return username;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public void setOnline(boolean isOnline) {
+		this.isOnline = isOnline;
 	}
+
+
 	
 }

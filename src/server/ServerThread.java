@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import cipher.RSA;
 
@@ -48,21 +49,22 @@ public class ServerThread extends Thread implements Runnable {
 				String username = jsonObject.get("user").getAsString();
 				String password = jsonObject.get("password").getAsString();
 				if (DBLogin.validate(username, password)) {
-					// 获取所有用户列表
 					String token = UUID.randomUUID().toString();
 					User sub = new User(username, token, token);
+					//加入AES密钥
 					onlineUsers.add(sub);
 					JsonObject messageObject = new JsonObject();
-					messageObject.addProperty("res_type", "validate_succeed");
+					messageObject.addProperty("res_type", "200");
 					messageObject.addProperty("token", token);
 					messageObject.addProperty("user", username);
 					// 如何发送好友列表
-//					ArrayList<User>allUsers=DBLogin.getUserList();
-//					for (User user : allUsers) {
-//						if(onlineUsers.contains(user))
-//							user.setStatus("online");
-//						messageObject.addProperty("", user.getUsername());
-//					}
+					ArrayList<User>allUsers=DBLogin.getUserList();
+					for (User user : allUsers) {
+						if(onlineUsers.contains(user))
+							user.setOnline(true);
+					}
+					String jsonList = gson.toJson(allUsers, new TypeToken<ArrayList<User>>() {}.getType());
+					messageObject.addProperty("friends", jsonList);
 					outp.println(gson.toJson(messageObject));
 				}
 			}
