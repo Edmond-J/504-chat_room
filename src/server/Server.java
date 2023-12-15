@@ -6,17 +6,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import cipher.RSA;
+import cipher.*;
 import dataStructure.User;
 
 public class Server {
 	static ArrayList<User> onlineUsers = new ArrayList<>();
 	int port;
-	static int rsaBit;
+	int rsaBit;
 	static String configPath;
 
 	public Server() throws IOException {
-		configPath = System.getProperty("user.home")+"\\EdmondChatRoomServer\\";
 		readConfig();
 		checkRSAKeys();
 		setupServer();
@@ -40,15 +39,16 @@ public class Server {
 		File file2 = new File(configPath+"rsa\\privateKey");
 		if (!file1.exists() || !file2.exists()) {
 			RSA rsa = new RSA(rsaBit);
-			RSA.writeByteToFile(file1, rsa.getPublicKey().getEncoded());
-			RSA.writeByteToFile(file2, rsa.getPrivateKey().getEncoded());
+			ReadWrite.writeByteToFile(file1, rsa.getPublicKey().getEncoded());
+			ReadWrite.writeByteToFile(file2, rsa.getPrivateKey().getEncoded());
 		}
 	}
 
 	private void readConfig() {
+		configPath = System.getProperty("user.home")+"\\EdmondChatRoomServer\\";
 		File file = new File(configPath+"config.txt");
 		if (!file.exists()) {
-			//需要从文件中读取
+			// 需要从文件中读取
 			port = 6069;
 			rsaBit = 1024;
 		}

@@ -61,28 +61,7 @@ public class RSA {
 		return new String(decryptedBytes);
 	}
 
-	static public void writeByteToFile(File file, byte[] toWrite) {
-		try {
-			String keyString = Base64.getEncoder().encodeToString(toWrite);
-			FileWriter fos = new FileWriter(file);
-			fos.write(keyString);
-			fos.flush();
-			fos.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
-	static public void writeStringToFile(File file, String toWrite) {
-		try {
-			FileWriter fos = new FileWriter(file);
-			fos.write(toWrite);
-			fos.flush();
-			fos.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	static public PrivateKey getPrivateFromFile(String filename) throws Exception {
 		String privateKeyString = new String(Files.readAllBytes(Paths.get(filename)));

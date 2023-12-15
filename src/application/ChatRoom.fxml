@@ -33,7 +33,7 @@
                   <Font name="Centaur" size="24.0" />
                </font>
             </Label>
-            <Label fx:id="destUser" prefHeight="30.0" prefWidth="118.0" text="Peer User" textFill="WHITE">
+            <Label fx:id="destUser" prefHeight="30.0" prefWidth="118.0" textFill="WHITE">
                <font>
                   <Font name="Centaur" size="24.0" />
                </font>
@@ -68,7 +68,7 @@
                         <Insets />
                      </HBox.margin>
                      <image>
-                        <Image url="@../../../../../Pictures/png%20icon/rabbit.png" />
+                        <Image url="@../../img/user.png" />
                      </image>
                   </ImageView>
                   <Label fx:id="sourceUser" prefHeight="30.0" prefWidth="118.0" text="User Name">
@@ -86,7 +86,7 @@
             <ListView fx:id="userList" prefHeight="267.0" prefWidth="140.0" VBox.vgrow="ALWAYS" />
             <HBox alignment="TOP_CENTER" prefHeight="4.0" prefWidth="140.0">
                <children>
-                  <Button mnemonicParsing="false" onAction="#sendMessage" prefWidth="55.0" text="Send" />
+                  <Button fx:id="sendButton" defaultButton="true" disable="true" mnemonicParsing="false" onAction="#sendMessage" prefWidth="55.0" text="Send" />
                   <Pane prefHeight="23.0" prefWidth="20.0">
                      <HBox.margin>
                         <Insets />

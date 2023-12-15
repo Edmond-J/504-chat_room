@@ -76,7 +76,7 @@ public class ServerThread extends Thread implements Runnable {
 						messageObject.addProperty("token", token);
 						messageObject.addProperty("user", username);
 						ArrayList<User> allUsers = DBLogin.getUserList();
-						ArrayList<Friend>allFriends=new ArrayList<>();
+						ArrayList<Friend> allFriends = new ArrayList<>();
 //						HashMap<String, Boolean> friendStatus = new HashMap<>();
 						for (User user : allUsers) {
 							if (Server.onlineUsers.contains(user))
@@ -84,7 +84,6 @@ public class ServerThread extends Thread implements Runnable {
 //							friendStatus.put(user.getUsername(), user.isOnline());
 							allFriends.add(new Friend(user.getUsername(), user.isOnline()));
 						}
-
 						String jsonList = gson.toJson(allFriends, new TypeToken<ArrayList<Friend>>() {
 						}.getType());
 						messageObject.addProperty("friends", jsonList);
@@ -93,6 +92,7 @@ public class ServerThread extends Thread implements Runnable {
 						jsonToSend.addProperty("res_type", "200");
 						jsonToSend.addProperty("body", bodyTxEn);
 						out.println(gson.toJson(jsonToSend));
+						onlineBroadcast(username);
 					}
 				}
 				if (req.contains("message")) {
@@ -130,21 +130,36 @@ public class ServerThread extends Thread implements Runnable {
 					jsonToSend.addProperty("body", bodyTxEn);
 					PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
 					out.println(gson.toJson(jsonToSend));
-					// 将消息转发给目标用户
 					// 将消息写入数据库
-//			System.out.println("服务器："+in.readLine());
-//			DataInputStream in;
-//			in = new DataInputStream(socket.getInputStream());
-//			System.out.println(in.readUTF());
-//			PrintWriter outp=new PrintWriter(socket.getOutputStream());
-//			outp.println("服务器->客户端："+ LocalDateTime.now()+socket.getLocalSocketAddress());
 				}
 			}
-			in.close();
-			out.close();
-			socket.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			// 关闭资源等清理操作
+			try {
+				in.close();
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void onlineBroadcast(String username) {
+		for (User user : Server.onlineUsers) {
+			try {
+				PrintWriter out = new PrintWriter(user.getSocket().getOutputStream(), true);
+				JsonObject messageObject = new JsonObject();
+				messageObject.addProperty("res_type", "online_broadcast");
+				messageObject.addProperty("new_user", username);
+				Gson gson = new Gson();
+				System.out.println(user.getSocket().getLocalSocketAddress());
+				System.out.println(gson.toJson(messageObject));
+				out.print(gson.toJson(messageObject));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

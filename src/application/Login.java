@@ -2,6 +2,7 @@ package application;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -9,20 +10,22 @@ import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.ResourceBundle;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
-import cipher.AES;
-import cipher.RSA;
+import cipher.*;
 import dataStructure.Friend;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
@@ -30,6 +33,7 @@ public class Login implements Initializable {
 	static String serverName;
 	static int serverPort;
 	static String configPath;
+	static Cipher cipher;
 	static String algorithm;
 	static int bit;
 	static Socket client;
@@ -45,7 +49,55 @@ public class Login implements Initializable {
 		userName.setText("jam");
 		password.setText("jam");
 		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
-		readConfig();
+		File configFile = new File(configPath+"config.json");
+		String lastUser = "jam";
+		String lastUserAvatar = "";
+		if (!configFile.exists()) {
+			serverName = "Localhost";
+			serverPort = 6069;
+			algorithm = "AES";
+			bit = 128;
+			HashMap<String, Object> config = new HashMap<>();
+			config.put("server_name", serverName);
+			config.put("server_port", serverPort);
+			config.put("algorithm", algorithm);
+			config.put("bit", bit);
+			config.put("laster_user", "");
+			config.put("avatar", "");
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			String jsonConfig = gson.toJson(config);
+			ReadWrite.writeStringToFile(configFile, jsonConfig);
+		} else {
+			try (FileReader fileReader = new FileReader(configFile)) {
+				Gson gson = new Gson();
+				JsonObject jsonObject = gson.fromJson(fileReader, JsonObject.class);
+				serverName = jsonObject.get("server_name").getAsString();
+				serverPort = jsonObject.get("server_port").getAsInt();
+				algorithm = jsonObject.get("algorithm").getAsString();
+				bit = jsonObject.get("bit").getAsInt();
+				lastUser = jsonObject.get("laster_user").getAsString();
+				lastUserAvatar = jsonObject.get("avatar").getAsString();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		/*Prepare Key*/
+		File keyFile = new File(configPath+"symmetric\\"+algorithm+bit);
+		if (!keyFile.exists()) {
+			Cipher.createKeyFile(algorithm, bit, keyFile);
+		}
+		cipher = new Cipher(algorithm, bit, configPath);
+		/*Setup Login UI*/
+		if (lastUser.length() > 0) {
+			userName.setText(lastUser);
+			if (lastUserAvatar.length() > 0) {
+				userAvatar.setImage(new Image(lastUserAvatar));
+			}
+		}
+		setupComm();
+	}
+
+	private void setupComm() {
 		try {
 			client = new Socket(serverName, serverPort);
 			out = new PrintWriter(client.getOutputStream(), true);
@@ -53,20 +105,6 @@ public class Login implements Initializable {
 			in = new BufferedReader(inputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-
-	private void readConfig() {
-		File file = new File(configPath+"config.txt");
-		if (!file.exists()) {
-			serverName = "Localhost";
-			serverPort = 6069;
-			algorithm = "AES";
-			bit = 1024;
-//			userAvatarPath = configPath+"user_avatar\\default_avatar.png";
-//			userAvatarPath=configPath+"user_avatar\\"+userName.getText()+".png";
-		} else {
-			// 读取配置文件内的内容
 		}
 	}
 
@@ -97,7 +135,7 @@ public class Login implements Initializable {
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
 			if (resType.equals("key")) {
-				RSA.writeStringToFile(file, jsonObject.get("key").getAsString());
+				ReadWrite.writeStringToFile(file, jsonObject.get("key").getAsString());
 			}
 //			String result = in.readLine();
 //			System.out.println(result);

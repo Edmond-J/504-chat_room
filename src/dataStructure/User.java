@@ -7,10 +7,10 @@ public class User {
 	String avatarPath;
 	boolean isOnline;
 	boolean isEncrypted;
-	transient String messagePw;
-	transient String token;
-	transient String key;
-	transient Socket socket;
+	String messagePw;
+	String token;
+	String key;
+	Socket socket;
 
 	public User(String name) {
 		username = name;

@@ -15,6 +15,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -37,6 +38,8 @@ public class Chat {
 	private TextArea editor, talkHistory;
 	@FXML
 	private ListView<Friend> userList;
+	@FXML
+	private Button sendButton;
 
 	public void buildUI(ArrayList<Friend> friendList) {
 		sourceUser.setText(currentUser);
@@ -44,12 +47,14 @@ public class Chat {
 		ObservableList<Friend> friends = FXCollections.observableArrayList();
 		int activeUser = 0;
 		for (Friend user : friendList) {
-			friends.add(user);
-			if (user.isOnline()) {
-				activeUser++;
+			if (!user.getName().equals(currentUser)) {
+				friends.add(user);
+				if (user.isOnline()) {
+					activeUser++;
+				}
 			}
 		}
-		userCount.setText("Active Friends:  ("+activeUser+"/"+friendList.size()+")");
+		userCount.setText("Active Friends:  ("+activeUser+"/"+(friendList.size()-1)+")");
 		userList.setCellFactory(lv -> new ListCell<Friend>() {
 			@Override
 			protected void updateItem(Friend friend, boolean empty) {
@@ -68,12 +73,14 @@ public class Chat {
 			}
 		});
 		userList.setItems(friends);
-		// 构建用户列表
 		userList.getSelectionModel().selectedItemProperty()
 				.addListener((ObservableValue<? extends Friend> observable, Friend oldValue, Friend newValue) -> {
 //					System.out.println("Selected item: "+newValue.getUsername());
 					peerUser = newValue.getName();
 					destUser.setText(peerUser);
+					if(newValue.isOnline())
+					sendButton.setDisable(false);
+					else sendButton.setDisable(true);
 				});
 	}
 
@@ -81,12 +88,22 @@ public class Chat {
 		new Thread(() -> {
 			while (true) {
 				try {
-					Gson gson=new Gson();
+					Gson gson = new Gson();
 					String response = Login.in.readLine();
 					System.out.println(response);
-					// 在这里处理收到的消息
+					// 处理收到的消息
 					JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 					String resType = jsonObject.get("res_type").getAsString();
+					if (resType.contains("online_broadcast")) {
+						System.out.println("new user");
+						String newUser = jsonObject.get("new_user").getAsString();
+						for (Friend friend : friendList) {
+							if (friend.getName().equals(newUser)) {
+								friend.setOnline(true);
+							}
+						}
+						buildUI(friendList);
+					}
 					if (resType.contains("paging")) {
 						String bodyRx = jsonObject.get("body").getAsString();
 						String bodyRxDe = AES.fakeDecryption(bodyRx);
@@ -94,7 +111,7 @@ public class Chat {
 						String time = jsonBodyRx.get("time").getAsString();
 						String source = jsonBodyRx.get("source").getAsString();
 						String dest = jsonBodyRx.get("dest").getAsString();
-						String message=jsonBodyRx.get("message_body").getAsString();
+						String message = jsonBodyRx.get("message_body").getAsString();
 						talkHistory.appendText(source+": "+time+"\n");
 						talkHistory.appendText("<-"+message+"\n");
 					}
@@ -107,7 +124,7 @@ public class Chat {
 
 	@FXML
 	public void sendMessage() {
-		if (editor.getText().length() == 0) {
+		if (editor.getText().length() == 0 || peerUser == null) {
 			return;
 		}
 		JsonObject messageObject = new JsonObject();

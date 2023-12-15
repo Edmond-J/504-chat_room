@@ -16,4 +16,9 @@ public class Friend {
 	public boolean isOnline() {
 		return isOnline;
 	}
+
+	public void setOnline(boolean isOnline) {
+		this.isOnline = isOnline;
+	}
+	
 }
