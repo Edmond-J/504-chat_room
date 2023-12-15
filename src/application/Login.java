@@ -72,7 +72,6 @@ public class Login implements Initializable {
 				e.printStackTrace();
 			}
 		}
-		prepareKey();
 		/*Setup Login UI*/
 		if (lastUser.length() > 0) {
 			userNameTF.setText(lastUser);
@@ -101,9 +100,9 @@ public class Login implements Initializable {
 		ReadWrite.writeStringToFile(clientConfigFile, jsonConfig);
 	}
 
-	static public void prepareKey() {
+	public void prepareKey() {
 		/*Prepare Key*/
-		File keyFile = new File(configPath+"symmetric\\"+algorithm+"-"+bit);
+		File keyFile = new File(configPath+"symmetric\\"+userNameTF.getText()+"\\"+algorithm+"-"+bit);
 		File parentFoler = keyFile.getParentFile();
 		if (parentFoler != null && !parentFoler.exists()) {
 			parentFoler.mkdirs();
@@ -111,7 +110,10 @@ public class Login implements Initializable {
 		if (!keyFile.exists()) {
 			CipherBox.createKeyFile(algorithm, bit, keyFile);
 		}
-		cipher = new CipherBox(algorithm, bit, configPath);
+		cipher = new CipherBox(algorithm, bit, keyFile);
+//		String ss=cipher.encrypt("good anmeng");
+//		System.out.println(ss);
+//		System.out.println(cipher.decrypt(ss));
 	}
 
 	private void setupComm() {
@@ -129,17 +131,6 @@ public class Login implements Initializable {
 	private void loadSettingPage() {
 		ConnectController connController = new ConnectController();
 		connController.show();
-//		try {
-//			FXMLLoader loader = new FXMLLoader(getClass().getResource("ConnectivitySetting.fxml"));
-//			Scene scene = new Scene(loader.load());
-//			ConnectController connController = loader.getController();
-//
-//			Stage newStage = new Stage();
-//			newStage.setScene(scene);
-//			newStage.show();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 	}
 
 	@FXML
@@ -152,12 +143,13 @@ public class Login implements Initializable {
 		System.out.println("Local socket："+client.getLocalSocketAddress());
 		File file = new File(configPath+"server_rsa\\public");
 		if (!file.exists()) {
-			requireKey(client);
+			requireKey();
 		}
-		validate(client);
+		prepareKey();
+		validate();
 	}
 
-	private void requireKey(Socket client) {
+	private void requireKey() {
 		try {
 			JsonObject messageObject = new JsonObject();
 			messageObject.addProperty("req_type", "public_key");
@@ -182,14 +174,14 @@ public class Login implements Initializable {
 		}
 	}
 
-	private void validate(Socket client) {
+	private void validate() {
 		try {
 			JsonObject message = new JsonObject();
 			message.addProperty("user", userNameTF.getText());
 			message.addProperty("password", passwordTF.getText());
-//			messageObject.addProperty("algorithm", algorithm);
-//			messageObject.addProperty("bit", bit);
-//			messageObject.addProperty("key", bit);
+			message.addProperty("algorithm", algorithm);
+			File keyFile = new File(configPath+"symmetric\\"+userNameTF.getText()+"\\"+algorithm+"-"+bit);
+			message.addProperty("key", ReadWrite.readStringFromFile(keyFile));
 			Gson gson = new Gson();
 			String bodyTx = gson.toJson(message);
 			String bodyTxEn = RSA.encrypt(bodyTx, RSA.getPublicFromFile(configPath+"rsa_server\\publicKey"));
@@ -205,7 +197,7 @@ public class Login implements Initializable {
 			String resType = jsonObject.get("res_type").getAsString();
 			if (resType.contains("200")) {
 				String bodyRx = jsonObject.get("body").getAsString();
-				String bodyRxDe = AES.fakeDecryption(bodyRx);
+				String bodyRxDe = cipher.decrypt(bodyRx);
 				JsonObject jsonBodyRx = gson.fromJson(bodyRxDe, JsonObject.class);
 				String token = jsonBodyRx.get("token").getAsString();
 				String currentUser = jsonBodyRx.get("user").getAsString();

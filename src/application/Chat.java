@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import cipher.AES;
 import dataStructure.Friend;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -21,6 +20,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 public class Chat {
 	String currentUser;
@@ -30,6 +30,7 @@ public class Chat {
 //	BufferedReader in;
 	String token;
 	ArrayList<Friend> friendList;
+	volatile boolean isrunning = true;
 	@FXML
 	private ImageView currentAvatar, setting;
 	@FXML
@@ -42,6 +43,10 @@ public class Chat {
 	private Button sendButton;
 
 	public void buildUI(ArrayList<Friend> friendList) {
+//		Stage stage = (Stage)sendButton.getScene().getWindow();
+//		stage.setOnCloseRequest(e -> {
+//			isrunning = false;
+//		});
 		sourceUser.setText(currentUser);
 		this.friendList = friendList;
 		ObservableList<Friend> friends = FXCollections.observableArrayList();
@@ -78,48 +83,52 @@ public class Chat {
 //					System.out.println("Selected item: "+newValue.getUsername());
 					peerUser = newValue.getName();
 					destUser.setText(peerUser);
-					if(newValue.isOnline())
-					sendButton.setDisable(false);
+					if (newValue.isOnline())
+						sendButton.setDisable(false);
 					else sendButton.setDisable(true);
 				});
 	}
 
 	public void setupPortListener() {
 		new Thread(() -> {
-			while (true) {
-				try {
-					Gson gson = new Gson();
-					String response = Login.in.readLine();
-					System.out.println(response);
-					// 处理收到的消息
-					JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
-					String resType = jsonObject.get("res_type").getAsString();
-					if (resType.contains("online_broadcast")) {
-						System.out.println("new user");
-						String newUser = jsonObject.get("new_user").getAsString();
-						for (Friend friend : friendList) {
-							if (friend.getName().equals(newUser)) {
-								friend.setOnline(true);
-							}
-						}
-						buildUI(friendList);
-					}
-					if (resType.contains("paging")) {
-						String bodyRx = jsonObject.get("body").getAsString();
-						String bodyRxDe = AES.fakeDecryption(bodyRx);
-						JsonObject jsonBodyRx = gson.fromJson(bodyRxDe, JsonObject.class);
-						String time = jsonBodyRx.get("time").getAsString();
-						String source = jsonBodyRx.get("source").getAsString();
-						String dest = jsonBodyRx.get("dest").getAsString();
-						String message = jsonBodyRx.get("message_body").getAsString();
-						talkHistory.appendText(source+": "+time+"\n");
-						talkHistory.appendText("<-"+message+"\n");
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			while (isrunning) {
+				portListener();
 			}
 		}).start();
+	}
+
+	public void portListener() {
+		try {
+			Gson gson = new Gson();
+			String response = Login.in.readLine();
+			System.out.println(response);
+			// 处理收到的消息
+			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
+			String resType = jsonObject.get("res_type").getAsString();
+			if (resType.contains("online_broadcast")) {
+				System.out.println("new user");
+				String newUser = jsonObject.get("new_user").getAsString();
+				for (Friend friend : friendList) {
+					if (friend.getName().equals(newUser)) {
+						friend.setOnline(true);
+					}
+				}
+				buildUI(friendList);
+			}
+			if (resType.contains("paging")) {
+				String bodyRx = jsonObject.get("body").getAsString();
+				String bodyRxDe = Login.cipher.decrypt(bodyRx);
+				JsonObject jsonBodyRx = gson.fromJson(bodyRxDe, JsonObject.class);
+				String time = jsonBodyRx.get("time").getAsString();
+				String source = jsonBodyRx.get("source").getAsString();
+				String dest = jsonBodyRx.get("dest").getAsString();
+				String message = jsonBodyRx.get("message_body").getAsString();
+				talkHistory.appendText(source+": "+time+"\n");
+				talkHistory.appendText("<-"+message+"\n");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@FXML
@@ -133,7 +142,7 @@ public class Chat {
 		messageObject.addProperty("dest", peerUser);
 		messageObject.addProperty("message_body", editor.getText());
 		Gson gson = new Gson();
-		String bodyTxEn = AES.fakeEncryption(gson.toJson(messageObject));
+		String bodyTxEn = Login.cipher.encrypt(gson.toJson(messageObject));
 		JsonObject jsonToSend = new JsonObject();
 		jsonToSend.addProperty("req_type", "message");
 		jsonToSend.addProperty("source", currentUser);// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠

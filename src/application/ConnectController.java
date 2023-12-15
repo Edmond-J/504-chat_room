@@ -62,7 +62,6 @@ public class ConnectController implements Initializable {
 			Login.bit = 0;
 		}
 		Login.saveConfigToFile();
-		Login.prepareKey();
 		close();
 	}
 	
@@ -78,6 +77,7 @@ public class ConnectController implements Initializable {
 		portTF.setText(""+Login.serverPort);
 		encryptCB.getItems().addAll("AES-128", "AES-192", "AES-256", "DES");
 		encryptCB.setPromptText(Login.algorithm+"-"+Login.bit);
+		encryptCB.setValue(Login.algorithm+"-"+Login.bit);
 		cancelButton.setOnAction(e -> {
 			close();
 		});

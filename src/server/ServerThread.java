@@ -1,6 +1,6 @@
 package server;
 
-import database.DBLogin;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,8 +17,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
-import cipher.AES;
-import cipher.RSA;
+import cipher.*;
+import database.DBLogin;
 import dataStructure.Friend;
 import dataStructure.User;
 
@@ -66,17 +66,20 @@ public class ServerThread extends Thread implements Runnable {
 					String username = jsonObject.get("user").getAsString();
 					String password = jsonObject.get("password").getAsString();
 					if (db.validate(username, password)) {
+						String algorithm = jsonObject.get("algorithm").getAsString();
+						String key = jsonObject.get("key").getAsString();
 						String token = UUID.randomUUID().toString();
 						boolean isEncrypted = db.checkEncryption(username);
 						String messagePw = db.getMessagePw(username);
-						String aesKey = "";
-						thisUser = new User(username, isEncrypted, messagePw, token, aesKey, socket);
+//						String aesKey = "";
+						thisUser = new User(username, isEncrypted, messagePw, token, algorithm, key, socket);
 						// 加入AES密钥
 						Server.onlineUsers.add(thisUser);
 						JsonObject messageObject = new JsonObject();
 //					messageObject.addProperty("res_type", "200");
 						messageObject.addProperty("token", token);
 						messageObject.addProperty("user", username);
+						messageObject.addProperty("isEncrypted", isEncrypted);
 						ArrayList<User> allUsers = db.getUserList();
 						ArrayList<Friend> allFriends = new ArrayList<>();
 //						HashMap<String, Boolean> friendStatus = new HashMap<>();
@@ -89,7 +92,7 @@ public class ServerThread extends Thread implements Runnable {
 						String jsonList = gson.toJson(allFriends, new TypeToken<ArrayList<Friend>>() {
 						}.getType());
 						messageObject.addProperty("friends", jsonList);
-						String bodyTxEn = AES.fakeEncryption(gson.toJson(messageObject));
+						String bodyTxEn = CipherBox.encrypt(gson.toJson(messageObject), algorithm, key);
 						JsonObject jsonToSend = new JsonObject();
 						jsonToSend.addProperty("res_type", "200");
 						jsonToSend.addProperty("body", bodyTxEn);
@@ -101,12 +104,12 @@ public class ServerThread extends Thread implements Runnable {
 					JsonObject rawJson = gson.fromJson(req, JsonObject.class);
 					String sourceUser = rawJson.get("source").getAsString();
 					String encryBody = rawJson.get("body").getAsString();
-					String decryBody = AES.fakeDecryption(encryBody);
+					String decryBody = CipherBox.decrypt(encryBody, thisUser.getAlgorithm(), thisUser.getKey());
+					System.out.println("107"+thisUser.getKey());
 					JsonObject jsonObject = gson.fromJson(decryBody, JsonObject.class);
 					String token = jsonObject.get("token").getAsString();
 					String dest = jsonObject.get("dest").getAsString();
 					String message = jsonObject.get("message_body").getAsString();
-					System.out.println("107:"+message);
 					if (!token.equals(thisUser.getToken())) {
 						// 返回相应消息
 						return;
@@ -126,25 +129,19 @@ public class ServerThread extends Thread implements Runnable {
 					messageObject.addProperty("source", sourceUser);// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠
 					messageObject.addProperty("dest", tagetUser.getUsername());
 					messageObject.addProperty("message_body", message);
-					String bodyTxEn = AES.fakeEncryption(gson.toJson(messageObject));
+					String bodyTxEn = CipherBox.encrypt(gson.toJson(messageObject), tagetUser.getAlgorithm(),
+							tagetUser.getKey());
 					JsonObject jsonToSend = new JsonObject();
 					jsonToSend.addProperty("res_type", "paging");
 					jsonToSend.addProperty("body", bodyTxEn);
 					PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
 					out.println(gson.toJson(jsonToSend));
+					db.acceptMessage(currentTime, sourceUser, dest, message);
 					// 将消息写入数据库
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			// 关闭资源等清理操作
-			try {
-				in.close();
-				socket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 

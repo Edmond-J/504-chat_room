@@ -9,6 +9,7 @@ public class User {
 	boolean isEncrypted;
 	String messagePw;
 	String token;
+	String algorithm;
 	String key;
 	Socket socket;
 
@@ -16,12 +17,14 @@ public class User {
 		username = name;
 	}
 
-	public User(String username, boolean isEncrypted, String messagePw, String token, String key, Socket socket) {
+	public User(String username, boolean isEncrypted, String messagePw, String token, String algorithm, String key,
+			Socket socket) {
 		this.username = username;
 		this.isOnline = true;
 		this.isEncrypted = isEncrypted;
 		this.messagePw = messagePw;
 		this.token = token;
+		this.algorithm = algorithm;
 		this.key = key;
 		this.socket = socket;
 	}
@@ -55,6 +58,14 @@ public class User {
 
 	public boolean isOnline() {
 		return isOnline;
+	}
+
+	public String getAlgorithm() {
+		return algorithm;
+	}
+
+	public String getKey() {
+		return key;
 	}
 
 	public void setOnline(boolean isOnline) {
