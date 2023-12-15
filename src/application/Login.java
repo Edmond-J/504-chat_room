@@ -33,42 +33,33 @@ public class Login implements Initializable {
 	static String serverName;
 	static int serverPort;
 	static String configPath;
-	static Cipher cipher;
+	static CipherBox cipher;
 	static String algorithm;
 	static int bit;
 	static Socket client;
 	static PrintWriter out;
 	static BufferedReader in;
 	@FXML
-	TextField userName, password;
+	TextField userNameTF, passwordTF;
 	@FXML
-	ImageView userAvatar;
+	ImageView userAvatarIV;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		userName.setText("jam");
-		password.setText("jam");
+		userNameTF.setText("jam");
+		passwordTF.setText("jam");
 		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
-		File configFile = new File(configPath+"config.json");
 		String lastUser = "jam";
 		String lastUserAvatar = "";
-		if (!configFile.exists()) {
+		File clientConfigFile = new File(configPath+"config.json");
+		if (!clientConfigFile.exists()) {
 			serverName = "Localhost";
 			serverPort = 6069;
 			algorithm = "AES";
 			bit = 128;
-			HashMap<String, Object> config = new HashMap<>();
-			config.put("server_name", serverName);
-			config.put("server_port", serverPort);
-			config.put("algorithm", algorithm);
-			config.put("bit", bit);
-			config.put("laster_user", "");
-			config.put("avatar", "");
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			String jsonConfig = gson.toJson(config);
-			ReadWrite.writeStringToFile(configFile, jsonConfig);
+			saveConfigToFile();
 		} else {
-			try (FileReader fileReader = new FileReader(configFile)) {
+			try (FileReader fileReader = new FileReader(clientConfigFile)) {
 				Gson gson = new Gson();
 				JsonObject jsonObject = gson.fromJson(fileReader, JsonObject.class);
 				serverName = jsonObject.get("server_name").getAsString();
@@ -81,20 +72,46 @@ public class Login implements Initializable {
 				e.printStackTrace();
 			}
 		}
-		/*Prepare Key*/
-		File keyFile = new File(configPath+"symmetric\\"+algorithm+bit);
-		if (!keyFile.exists()) {
-			Cipher.createKeyFile(algorithm, bit, keyFile);
-		}
-		cipher = new Cipher(algorithm, bit, configPath);
+		prepareKey();
 		/*Setup Login UI*/
 		if (lastUser.length() > 0) {
-			userName.setText(lastUser);
+			userNameTF.setText(lastUser);
 			if (lastUserAvatar.length() > 0) {
-				userAvatar.setImage(new Image(lastUserAvatar));
+				userAvatarIV.setImage(new Image(lastUserAvatar));
 			}
 		}
 		setupComm();
+	}
+
+	static public void saveConfigToFile() {
+		File clientConfigFile = new File(configPath+"config.json");
+		File parentFoler = clientConfigFile.getParentFile();
+		if (parentFoler != null && !parentFoler.exists()) {
+			parentFoler.mkdirs();
+		}
+		HashMap<String, Object> config = new HashMap<>();
+		config.put("server_name", serverName);
+		config.put("server_port", serverPort);
+		config.put("algorithm", algorithm);
+		config.put("bit", bit);
+		config.put("laster_user", "");
+		config.put("avatar", "");
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String jsonConfig = gson.toJson(config);
+		ReadWrite.writeStringToFile(clientConfigFile, jsonConfig);
+	}
+
+	static public void prepareKey() {
+		/*Prepare Key*/
+		File keyFile = new File(configPath+"symmetric\\"+algorithm+"-"+bit);
+		File parentFoler = keyFile.getParentFile();
+		if (parentFoler != null && !parentFoler.exists()) {
+			parentFoler.mkdirs();
+		}
+		if (!keyFile.exists()) {
+			CipherBox.createKeyFile(algorithm, bit, keyFile);
+		}
+		cipher = new CipherBox(algorithm, bit, configPath);
 	}
 
 	private void setupComm() {
@@ -109,8 +126,25 @@ public class Login implements Initializable {
 	}
 
 	@FXML
+	private void loadSettingPage() {
+		ConnectController connController = new ConnectController();
+		connController.show();
+//		try {
+//			FXMLLoader loader = new FXMLLoader(getClass().getResource("ConnectivitySetting.fxml"));
+//			Scene scene = new Scene(loader.load());
+//			ConnectController connController = loader.getController();
+//
+//			Stage newStage = new Stage();
+//			newStage.setScene(scene);
+//			newStage.show();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+	}
+
+	@FXML
 	public void login() {
-		if (userName.getText().length() == 0 || password.getText().length() == 0) {
+		if (userNameTF.getText().length() == 0 || passwordTF.getText().length() == 0) {
 			System.out.println("user name or password can't be empty");
 			return;
 		}
@@ -127,15 +161,19 @@ public class Login implements Initializable {
 		try {
 			JsonObject messageObject = new JsonObject();
 			messageObject.addProperty("req_type", "public_key");
-			messageObject.addProperty("user", userName.getText());// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠
+			messageObject.addProperty("user", userNameTF.getText());// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠
 			Gson gson = new Gson();
 			out.println(gson.toJson(messageObject));
-			File file = new File(configPath+"rsa_server\\publicKey");
+			File keyFile = new File(configPath+"rsa_server\\publicKey");
+			File parentFoler = keyFile.getParentFile();
+			if (parentFoler != null && !parentFoler.exists()) {
+				parentFoler.mkdirs();
+			}
 			String response = in.readLine();
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
-			if (resType.equals("key")) {
-				ReadWrite.writeStringToFile(file, jsonObject.get("key").getAsString());
+			if (resType.equals("key_delivery")) {
+				ReadWrite.writeStringToFile(keyFile, jsonObject.get("key").getAsString());
 			}
 //			String result = in.readLine();
 //			System.out.println(result);
@@ -147,8 +185,8 @@ public class Login implements Initializable {
 	private void validate(Socket client) {
 		try {
 			JsonObject message = new JsonObject();
-			message.addProperty("user", userName.getText());
-			message.addProperty("password", password.getText());
+			message.addProperty("user", userNameTF.getText());
+			message.addProperty("password", passwordTF.getText());
 //			messageObject.addProperty("algorithm", algorithm);
 //			messageObject.addProperty("bit", bit);
 //			messageObject.addProperty("key", bit);
@@ -200,7 +238,7 @@ public class Login implements Initializable {
 
 	private void loadChatPage(String currentUser, String token, ArrayList<Friend> friendList) {
 		try {
-			Stage stage = (Stage)userName.getScene().getWindow();// 必须从一个节点获取
+			Stage stage = (Stage)userNameTF.getScene().getWindow();// 必须从一个节点获取
 			stage.close();
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatRoom.fxml"));
 			Scene scene = new Scene(loader.load());

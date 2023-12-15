@@ -1,7 +1,5 @@
 package cipher;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -60,8 +58,6 @@ public class RSA {
 		byte[] decryptedBytes = cipher.doFinal(messageInByte);
 		return new String(decryptedBytes);
 	}
-
-	
 
 	static public PrivateKey getPrivateFromFile(String filename) throws Exception {
 		String privateKeyString = new String(Files.readAllBytes(Paths.get(filename)));

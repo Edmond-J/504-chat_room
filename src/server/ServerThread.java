@@ -24,12 +24,14 @@ import dataStructure.User;
 
 public class ServerThread extends Thread implements Runnable {
 	Socket socket;
+	DBLogin db;
 	BufferedReader in;
 	PrintWriter out;
 	User thisUser;
 
-	public ServerThread(Socket s) {
-		socket = s;
+	public ServerThread(Socket socket, DBLogin db) {
+		this.socket = socket;
+		this.db = db;
 		try {
 			InputStreamReader inputStream = new InputStreamReader(socket.getInputStream());
 			in = new BufferedReader(inputStream);
@@ -63,10 +65,10 @@ public class ServerThread extends Thread implements Runnable {
 					JsonObject jsonObject = gson.fromJson(decryBody, JsonObject.class);
 					String username = jsonObject.get("user").getAsString();
 					String password = jsonObject.get("password").getAsString();
-					if (DBLogin.validate(username, password)) {
+					if (db.validate(username, password)) {
 						String token = UUID.randomUUID().toString();
-						boolean isEncrypted = DBLogin.checkEncryption(username);
-						String messagePw = DBLogin.getMessagePw(username);
+						boolean isEncrypted = db.checkEncryption(username);
+						String messagePw = db.getMessagePw(username);
 						String aesKey = "";
 						thisUser = new User(username, isEncrypted, messagePw, token, aesKey, socket);
 						// 加入AES密钥
@@ -75,7 +77,7 @@ public class ServerThread extends Thread implements Runnable {
 //					messageObject.addProperty("res_type", "200");
 						messageObject.addProperty("token", token);
 						messageObject.addProperty("user", username);
-						ArrayList<User> allUsers = DBLogin.getUserList();
+						ArrayList<User> allUsers = db.getUserList();
 						ArrayList<Friend> allFriends = new ArrayList<>();
 //						HashMap<String, Boolean> friendStatus = new HashMap<>();
 						for (User user : allUsers) {

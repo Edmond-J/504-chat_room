@@ -9,16 +9,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AES {
-	String keyString;
-
-	public AES(int length) {
+	static public String generateKey(int length) {
 		try {
 			KeyGenerator generator = KeyGenerator.getInstance("AES");
 			generator.init(length);
 			SecretKey key = generator.generateKey();
-			keyString = Base64.getEncoder().encodeToString(key.getEncoded());
+			String keyString = Base64.getEncoder().encodeToString(key.getEncoded());
+			return keyString;
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
+			return null;
 		}
 	}
 
@@ -32,28 +32,13 @@ public class AES {
 	}
 
 	static public String decrypt(String message, String keyString) throws Exception {
-		try {
-			byte[] raw = keyString.getBytes("utf-8");
-			SecretKeySpec keySpec = new SecretKeySpec(raw, "AES");
-			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-			cipher.init(Cipher.DECRYPT_MODE, keySpec);
-			byte[] encrypted1 = Base64.getDecoder().decode(message);// 先用base64解密
-			try {
-				byte[] original = cipher.doFinal(encrypted1);
-				String originalString = new String(original, "utf-8");
-				return originalString;
-			} catch (Exception e) {
-				System.out.println(e.toString());
-				return null;
-			}
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
-			return null;
-		}
-	}
-
-	public String getKeyString() {
-		return keyString;
+		byte[] raw = keyString.getBytes("utf-8");
+		SecretKeySpec keySpec = new SecretKeySpec(raw, "AES");
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, keySpec);
+		byte[] byteDataToDecrypt = Base64.getDecoder().decode(message);// 先用base64解密
+		byte[] decrypted = cipher.doFinal(byteDataToDecrypt);
+		return new String(decrypted, "utf-8");
 	}
 
 	static public String fakeEncryption(String message) {
@@ -65,11 +50,11 @@ public class AES {
 	}
 
 	public static void main(String[] args) throws Exception {
-		AES aes = new AES(128);
-		System.out.println(aes.keyString);
+		String keyString = generateKey(128);
+		System.out.println(keyString);
 		String messString = "Good morning, EdmondJin! It's a good day";
-		String encryptedMessage = AES.encrypt(messString, aes.keyString);
-		String decryptedMessage = AES.decrypt(encryptedMessage, aes.keyString);
+		String encryptedMessage = AES.encrypt(messString, keyString);
+		String decryptedMessage = AES.decrypt(encryptedMessage, keyString);
 		System.out.println(encryptedMessage);
 		System.out.println(decryptedMessage);
 	}

@@ -1,6 +1,5 @@
 package database;
 
-import server.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -8,8 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
@@ -19,11 +16,17 @@ import cipher.MD5;
 import dataStructure.User;
 
 public class DBLogin {
-	static String jdbc_url = "jdbc:mysql://localhost:3306/edmond_chat_room";
-	static String username_db = "root";
-	static String password_db = "";
+	String jdbc_url = "jdbc:mysql://localhost:3306/edmond_chat_room";
+	String username_db = "root";
+	String password_db = "";
 
-	static public boolean validate(String username, String password) {
+	public DBLogin(String address, String username_db, String password_db) {
+//		this.jdbc_url = "jdbc:mysql://"+address+":3306/edmond_chat_room\"";
+//		this.username_db = username_db;
+//		this.password_db = password_db;
+	}
+
+	public boolean validate(String username, String password) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			System.out.println("query from database...");
@@ -47,7 +50,7 @@ public class DBLogin {
 		}
 	}
 
-	static public boolean updatePw(String username, String password) {
+	public boolean updatePw(String username, String password) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			System.out.println("update password...");
@@ -74,7 +77,7 @@ public class DBLogin {
 		}
 	}
 
-	static public ArrayList<User> getUserList() {
+	public ArrayList<User> getUserList() {
 		ArrayList<User> allUsers = new ArrayList<>();
 		try {
 			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
@@ -91,7 +94,7 @@ public class DBLogin {
 		return allUsers;
 	}
 
-	static public boolean checkEncryption(String username) {
+	public boolean checkEncryption(String username) {
 		try {
 			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
 //			Statement statement = connection.createStatement();
@@ -109,7 +112,7 @@ public class DBLogin {
 		return false;
 	}
 
-	static public String getMessagePw(String username) {
+	public String getMessagePw(String username) {
 		try {
 			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
 //			Statement statement = connection.createStatement();
@@ -127,7 +130,7 @@ public class DBLogin {
 		return "";
 	}
 
-	static public void storeMessage(String time, String source, String dest, String message, boolean encrypted,
+	public void storeMessage(String time, String source, String dest, String message, boolean encrypted,
 			boolean inbound) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
@@ -149,7 +152,7 @@ public class DBLogin {
 		}
 	}
 
-	static public void acceptMessage(String time, String source, String dest, String message) {
+	public void acceptMessage(String time, String source, String dest, String message) {
 		if (checkEncryption(source)) {// 选择加密的情况
 			String key = getMessagePw(source);
 			String messageEn = AES.fakeEncryption(message);
@@ -170,6 +173,6 @@ public class DBLogin {
 //		new DBLogin();
 //		System.out.println(validate("jam", "dd"));
 //		System.out.println(checkEncryption("jam"));
-		storeMessage("9:52", "jam", "pet", "school day is good", false, true);
+//		storeMessage("9:52", "jam", "pet", "school day is good", false, true);
 	}
 }
