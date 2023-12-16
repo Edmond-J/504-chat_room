@@ -22,12 +22,10 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
-public class Chat {
+public class ChatController {
 	String currentUser;
 	String peerUser;
-//	Socket client;
-//	PrintWriter out;
-//	BufferedReader in;
+	boolean isEncrypted;
 	String token;
 	ArrayList<Friend> friendList;
 	volatile boolean isrunning = true;
@@ -42,11 +40,23 @@ public class Chat {
 	@FXML
 	private Button sendButton;
 
+	public void setFields(String currentUser, boolean isEncrypted, String token, ArrayList<Friend> friendList) {
+		this.currentUser = currentUser;
+		this.isEncrypted = isEncrypted;
+		this.token = token;
+		this.friendList = friendList;
+	}
+
 	public void buildUI(ArrayList<Friend> friendList) {
-//		Stage stage = (Stage)sendButton.getScene().getWindow();
-//		stage.setOnCloseRequest(e -> {
-//			isrunning = false;
-//		});
+		Stage stage = (Stage)sendButton.getScene().getWindow();
+		stage.setOnCloseRequest(e -> {
+			try {
+				exit();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.out.println("close chat");
+		});
 		sourceUser.setText(currentUser);
 		this.friendList = friendList;
 		ObservableList<Friend> friends = FXCollections.observableArrayList();
@@ -101,7 +111,8 @@ public class Chat {
 		try {
 			Gson gson = new Gson();
 			String response = Login.in.readLine();
-			System.out.println(response);
+			if (response == null)
+				return;
 			// 处理收到的消息
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
@@ -129,6 +140,12 @@ public class Chat {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@FXML
+	private void showAccountSetting() {
+		AccountController ac = new AccountController(isEncrypted);
+		ac.show();
 	}
 
 	@FXML
@@ -162,22 +179,12 @@ public class Chat {
 		editor.clear();
 	}
 
-	public String getCurrentUser() {
-		return currentUser;
-	}
-
-	public void setCurrentUser(String currentUser) {
-		this.currentUser = currentUser;
-	}
-//	public void setClient(Socket client) {
-//		this.client = client;
-//	}
-
-	public void setToken(String token) {
-		this.token = token;
-	}
-
-	public void setFriendList(ArrayList<Friend> friendList) {
-		this.friendList = friendList;
+	@FXML
+	public void exit() throws IOException {
+		isrunning = false;
+		System.out.println("167 client logout");
+		Login.releaseResource();
+		Stage stage = (Stage)userList.getScene().getWindow();
+		stage.close();
 	}
 }

@@ -24,7 +24,21 @@ public class ConnectController implements Initializable {
 	private Button applyButton, cancelButton;
 
 	public ConnectController() {
-		System.out.println("constructor");
+	}
+
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
+		ipTF.setText(Login.serverName);
+		portTF.setText(""+Login.serverPort);
+		encryptCB.getItems().addAll("AES-128", "AES-192", "DES");
+		encryptCB.setPromptText(Login.algorithm+"-"+Login.bit);
+		encryptCB.setValue(Login.algorithm+"-"+Login.bit);
+		cancelButton.setOnAction(e -> {
+			close();
+		});
+		applyButton.setOnAction(e -> {
+			apply();
+		});
 	}
 
 	public void show() {
@@ -64,25 +78,10 @@ public class ConnectController implements Initializable {
 		Login.saveConfigToFile();
 		close();
 	}
-	
+
 	@FXML
 	private void close() {
 		Stage stage = (Stage)scene.getWindow();
 		stage.close();
-	}
-
-	@Override
-	public void initialize(URL location, ResourceBundle resources) {
-		ipTF.setText(Login.serverName);
-		portTF.setText(""+Login.serverPort);
-		encryptCB.getItems().addAll("AES-128", "AES-192", "AES-256", "DES");
-		encryptCB.setPromptText(Login.algorithm+"-"+Login.bit);
-		encryptCB.setValue(Login.algorithm+"-"+Login.bit);
-		cancelButton.setOnAction(e -> {
-			close();
-		});
-		applyButton.setOnAction(e -> {
-			apply();
-		});
 	}
 }

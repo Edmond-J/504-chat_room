@@ -71,4 +71,6 @@ public class User {
 	public void setOnline(boolean isOnline) {
 		this.isOnline = isOnline;
 	}
+
+
 }

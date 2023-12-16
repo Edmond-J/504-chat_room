@@ -16,9 +16,9 @@ import cipher.MD5;
 import dataStructure.User;
 
 public class DBLogin {
-	String jdbc_url = "jdbc:mysql://localhost:3306/edmond_chat_room";
-	String username_db = "root";
-	String password_db = "";
+	String jdbc_url = "jdbc:mysql://192.168.1.13:3306/edmond_chat_room";
+	String username_db = "edmond";
+	String password_db = "edmond_1216";
 
 	public DBLogin(String address, String username_db, String password_db) {
 //		this.jdbc_url = "jdbc:mysql://"+address+":3306/edmond_chat_room\"";
@@ -39,7 +39,7 @@ public class DBLogin {
 			ResultSet resultset = statement.executeQuery();
 			Boolean valid = resultset.next();
 //			System.out.println(resultset.getString("user_name"));;
-			System.out.println("database query returned");
+			System.out.println("database query returned "+ valid);
 			resultset.close();
 			statement.close();
 			connection.close();

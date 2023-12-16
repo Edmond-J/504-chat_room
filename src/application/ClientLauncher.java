@@ -1,5 +1,7 @@
 package application;
 	
+import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
@@ -7,7 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 
 
-public class ChatRoomLauncher extends Application {
+public class ClientLauncher extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -15,6 +17,13 @@ public class ChatRoomLauncher extends Application {
 			Scene scene = new Scene(login, 400, 300);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
+			primaryStage.setOnCloseRequest(event->{
+				try {
+					Login.releaseResource();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
 			primaryStage.show();
 		} catch (Exception e) {
 			e.printStackTrace();

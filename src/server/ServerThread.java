@@ -1,6 +1,5 @@
 package server;
 
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -65,39 +64,50 @@ public class ServerThread extends Thread implements Runnable {
 					JsonObject jsonObject = gson.fromJson(decryBody, JsonObject.class);
 					String username = jsonObject.get("user").getAsString();
 					String password = jsonObject.get("password").getAsString();
-					if (db.validate(username, password)) {
-						String algorithm = jsonObject.get("algorithm").getAsString();
-						String key = jsonObject.get("key").getAsString();
-						String token = UUID.randomUUID().toString();
-						boolean isEncrypted = db.checkEncryption(username);
-						String messagePw = db.getMessagePw(username);
-//						String aesKey = "";
-						thisUser = new User(username, isEncrypted, messagePw, token, algorithm, key, socket);
-						// 加入AES密钥
-						Server.onlineUsers.add(thisUser);
+					if (isUserOnline(username)) {
 						JsonObject messageObject = new JsonObject();
-//					messageObject.addProperty("res_type", "200");
-						messageObject.addProperty("token", token);
-						messageObject.addProperty("user", username);
-						messageObject.addProperty("isEncrypted", isEncrypted);
-						ArrayList<User> allUsers = db.getUserList();
-						ArrayList<Friend> allFriends = new ArrayList<>();
+						messageObject.addProperty("res_type", "301:user_already_online");
+						out.println(gson.toJson(messageObject));
+					} else {
+						if (db.validate(username, password)) {
+							String algorithm = jsonObject.get("algorithm").getAsString();
+							String key = jsonObject.get("key").getAsString();
+							String token = UUID.randomUUID().toString();
+							boolean isEncrypted = db.checkEncryption(username);
+							String messagePw = db.getMessagePw(username);
+//						String aesKey = "";
+							thisUser = new User(username, isEncrypted, messagePw, token, algorithm, key, socket);
+							// 加入AES密钥
+							Server.onlineUsers.add(thisUser);
+							JsonObject messageObject = new JsonObject();
+							messageObject.addProperty("token", token);
+							messageObject.addProperty("user", username);
+							messageObject.addProperty("isEncrypted", isEncrypted);
+							ArrayList<User> allUsers = db.getUserList();
+							ArrayList<Friend> allFriends = new ArrayList<>();
 //						HashMap<String, Boolean> friendStatus = new HashMap<>();
-						for (User user : allUsers) {
-							if (Server.onlineUsers.contains(user))
-								user.setOnline(true);
+							for (User user : allUsers) {
+								if (Server.onlineUsers.contains(user))
+									user.setOnline(true);
 //							friendStatus.put(user.getUsername(), user.isOnline());
-							allFriends.add(new Friend(user.getUsername(), user.isOnline()));
+								allFriends.add(new Friend(user.getUsername(), user.isOnline()));
+							}
+							String jsonList = gson.toJson(allFriends, new TypeToken<ArrayList<Friend>>() {
+							}.getType());
+							messageObject.addProperty("friends", jsonList);
+							String bodyTxEn = CipherBox.encrypt(gson.toJson(messageObject), algorithm, key);
+							JsonObject jsonToSend = new JsonObject();
+							jsonToSend.addProperty("res_type", "200:login_succeed");
+							jsonToSend.addProperty("body", bodyTxEn);
+							out.println(gson.toJson(jsonToSend));
+							onlineBroadcast(username);
+							System.out.println(username+" is on line");
+						} else {
+							JsonObject messageObject = new JsonObject();
+							messageObject.addProperty("res_type", "300:invalid_combination");
+							out.println(gson.toJson(messageObject));
+							System.out.println(username+":wrong passward");
 						}
-						String jsonList = gson.toJson(allFriends, new TypeToken<ArrayList<Friend>>() {
-						}.getType());
-						messageObject.addProperty("friends", jsonList);
-						String bodyTxEn = CipherBox.encrypt(gson.toJson(messageObject), algorithm, key);
-						JsonObject jsonToSend = new JsonObject();
-						jsonToSend.addProperty("res_type", "200");
-						jsonToSend.addProperty("body", bodyTxEn);
-						out.println(gson.toJson(jsonToSend));
-						onlineBroadcast(username);
 					}
 				}
 				if (req.contains("message")) {
@@ -137,12 +147,29 @@ public class ServerThread extends Thread implements Runnable {
 					PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
 					out.println(gson.toJson(jsonToSend));
 					db.acceptMessage(currentTime, sourceUser, dest, message);
-					// 将消息写入数据库
+				}
+				if (req.contains("log_out")) {
+					offlineBroadcast(thisUser.getUsername());
+					System.out.println(thisUser.getUsername()+" is offline");
+					Server.onlineUsers.remove(thisUser);
+					in.close();
+					out.close();
+					socket.close();
+					break;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private boolean isUserOnline(String username) {
+		for (User user : Server.onlineUsers) {
+			if (user.getUsername().equals(username)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void onlineBroadcast(String username) {
@@ -160,5 +187,9 @@ public class ServerThread extends Thread implements Runnable {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private void offlineBroadcast(String username) {
+		
 	}
 }

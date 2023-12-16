@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Chat">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.ChatController">
   <columnConstraints>
     <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="457.14288330078125" minWidth="10.0" prefWidth="457.14288330078125" />
     <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="NEVER" maxWidth="150.0" minWidth="150.0" prefWidth="150.0" />
@@ -39,7 +39,7 @@
                </font>
             </Label>
             <Pane prefHeight="50.0" prefWidth="279.0" HBox.hgrow="ALWAYS" />
-            <ImageView fx:id="setting" fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="setting" fitHeight="30.0" fitWidth="30.0" onMouseClicked="#showAccountSetting" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../../img/settings.png" />
                </image>
@@ -59,7 +59,7 @@
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
       </TextArea>
-      <VBox prefHeight="351.0" prefWidth="140.0" spacing="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.rowSpan="2147483647">
+      <VBox onDragDetected="#exit" prefHeight="351.0" prefWidth="140.0" spacing="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.rowSpan="2147483647">
          <children>
             <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
@@ -92,7 +92,7 @@
                         <Insets />
                      </HBox.margin>
                   </Pane>
-                  <Button mnemonicParsing="false" prefWidth="55.0" text="Exit" />
+                  <Button mnemonicParsing="false" onAction="#exit" prefWidth="55.0" text="Exit" />
                </children>
                <VBox.margin>
                   <Insets bottom="10.0" top="10.0" />

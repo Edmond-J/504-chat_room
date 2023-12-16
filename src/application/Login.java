@@ -24,6 +24,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,14 +42,18 @@ public class Login implements Initializable {
 	static PrintWriter out;
 	static BufferedReader in;
 	@FXML
-	TextField userNameTF, passwordTF;
+	TextField userNameTF;
+	@FXML
+	PasswordField passwordPF;
 	@FXML
 	ImageView userAvatarIV;
+	@FXML
+	Label sysMessage;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		userNameTF.setText("jam");
-		passwordTF.setText("jam");
+		passwordPF.setText("jam");
 		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
 		String lastUser = "jam";
 		String lastUserAvatar = "";
@@ -129,13 +135,13 @@ public class Login implements Initializable {
 
 	@FXML
 	private void loadSettingPage() {
-		ConnectController connController = new ConnectController();
-		connController.show();
+		ConnectController cc = new ConnectController();
+		cc.show();
 	}
 
 	@FXML
 	public void login() {
-		if (userNameTF.getText().length() == 0 || passwordTF.getText().length() == 0) {
+		if (userNameTF.getText().length() == 0 || passwordPF.getText().length() == 0) {
 			System.out.println("user name or password can't be empty");
 			return;
 		}
@@ -176,9 +182,10 @@ public class Login implements Initializable {
 
 	private void validate() {
 		try {
+			System.out.println(userNameTF.getText()+" trying to login...");
 			JsonObject message = new JsonObject();
 			message.addProperty("user", userNameTF.getText());
-			message.addProperty("password", passwordTF.getText());
+			message.addProperty("password", passwordPF.getText());
 			message.addProperty("algorithm", algorithm);
 			File keyFile = new File(configPath+"symmetric\\"+userNameTF.getText()+"\\"+algorithm+"-"+bit);
 			message.addProperty("key", ReadWrite.readStringFromFile(keyFile));
@@ -189,26 +196,27 @@ public class Login implements Initializable {
 			jsonToSend.addProperty("req_type", "validate");
 			jsonToSend.addProperty("body", bodyTxEn);
 			out.println(gson.toJson(jsonToSend));
-			// 发送用户名密码
 			String response = in.readLine();
-			// 需要用AES解密
 			System.out.println(response);
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
-			if (resType.contains("200")) {
+			if (resType.contains("200:login_succeed")) {
 				String bodyRx = jsonObject.get("body").getAsString();
 				String bodyRxDe = cipher.decrypt(bodyRx);
 				JsonObject jsonBodyRx = gson.fromJson(bodyRxDe, JsonObject.class);
 				String token = jsonBodyRx.get("token").getAsString();
 				String currentUser = jsonBodyRx.get("user").getAsString();
+				boolean isEncrypted = jsonBodyRx.get("isEncrypted").getAsBoolean();
 				String friends = jsonBodyRx.get("friends").getAsString();
 				Type listType = new TypeToken<ArrayList<Friend>>() {
 				}.getType();
 				ArrayList<Friend> friendList = gson.fromJson(friends, listType);
-				loadChatPage(currentUser, token, friendList);
+				loadChatPage(currentUser, isEncrypted, token, friendList);
 				System.out.println("login succeed");
-			} else if (resType.contains("300")) {
-				System.out.println("no such user or user name and password not match");
+			} else if (resType.contains("300:invalid_combination")) {
+				sysMessage.setText("error: no such user or user name and password not match");
+			} else if (resType.contains("301:user_already_online")) {
+				sysMessage.setText("error: user already online");
 			} else if (resType.contains("400")) {
 				System.out.println("too much attamptions, please try later");
 			} else System.out.println("server has no response");
@@ -228,19 +236,24 @@ public class Login implements Initializable {
 //		// 收到token则启动聊天界面
 //	}
 
-	private void loadChatPage(String currentUser, String token, ArrayList<Friend> friendList) {
+	static public void releaseResource() throws IOException {
+		Login.out.println("log_out");
+		Login.in.close();
+		Login.out.close();
+		Login.client.close();
+	}
+
+	private void loadChatPage(String currentUser, boolean isEncrypted, String token, ArrayList<Friend> friendList) {
 		try {
 			Stage stage = (Stage)userNameTF.getScene().getWindow();// 必须从一个节点获取
 			stage.close();
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("ChatRoom.fxml"));
 			Scene scene = new Scene(loader.load());
-			Chat chatController = loader.getController();
-			chatController.setCurrentUser(currentUser);
-			chatController.setToken(token);
-			chatController.buildUI(friendList);
-			chatController.setupPortListener();
 			Stage newStage = new Stage();
 			newStage.setScene(scene);
+			ChatController chatController = loader.getController();
+			chatController.setFields(currentUser, isEncrypted, token, friendList);
+			chatController.setupPortListener();
 			newStage.show();
 		} catch (IOException e) {
 			e.printStackTrace();
