@@ -16,11 +16,11 @@ public class MD5 {
 		for (int i = 0; i < 32-md5code.length(); i++) {
 			md5code = "0"+md5code;
 		}
-		System.out.println(md5code);
 		return md5code;
 	}
 	public static void main(String[] args) throws Exception {
-		String str = "edmond";
-		toMd5(str);
+		//for testing purpose
+		String str = "robot";
+		System.out.println(toMd5(str));
 	}
 }

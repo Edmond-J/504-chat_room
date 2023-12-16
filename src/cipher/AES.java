@@ -58,6 +58,36 @@ public class AES {
 		}
 	}
 
+	static public String encryptWithPw(String message, String password) {
+		SecretKey secretKey = new SecretKeySpec(password.getBytes(), "AES");
+		Cipher cipher;
+		try {
+			cipher = Cipher.getInstance("AES");
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+			byte[] encryptedBytes = cipher.doFinal(message.getBytes());
+			return Base64.getEncoder().encodeToString(encryptedBytes);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+				| BadPaddingException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	static public String decryptWithPw(String message, String password){
+		SecretKey secretKey = new SecretKeySpec(password.getBytes(), "AES");
+		Cipher cipher;
+		try {
+			cipher = Cipher.getInstance("AES");
+			cipher.init(Cipher.DECRYPT_MODE, secretKey);
+			byte[] encryptedBytes = Base64.getDecoder().decode(message);
+			byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+			return new String(decryptedBytes);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	static public String fakeEncryption(String message) {
 		return message;
 	}
@@ -67,12 +97,17 @@ public class AES {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String keyString = generateKey(128);
-		System.out.println(keyString);
+		//for testing purpose
+//		String keyString = generateKey(128);
+//		System.out.println(keyString);
 		String messString = "Good morning, EdmondJin! It's a good day";
-		String encryptedMessage = AES.encrypt(messString, keyString);
-		String decryptedMessage = AES.decrypt(encryptedMessage, keyString);
-		System.out.println(encryptedMessage);
-		System.out.println(decryptedMessage);
+//		String encryptedMessage = AES.encrypt(messString, keyString);
+//		String decryptedMessage = AES.decrypt(encryptedMessage, keyString);
+//		System.out.println(encryptedMessage);
+//		System.out.println(decryptedMessage);
+		String enMes=AES.encryptWithPw(messString, MD5.toMd5("dog"));
+		System.out.println(enMes);
+		String deMes=AES.decryptWithPw(enMes, MD5.toMd5("dog"));
+		System.out.println(deMes);
 	}
 }

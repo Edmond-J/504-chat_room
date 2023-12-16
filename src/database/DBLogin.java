@@ -16,14 +16,21 @@ import cipher.MD5;
 import dataStructure.User;
 
 public class DBLogin {
-	String jdbc_url = "jdbc:mysql://192.168.1.13:3306/edmond_chat_room";
-	String username_db = "edmond";
-	String password_db = "edmond_1216";
+	String jdbc_url;
+	String username_db;
+	String password_db;
+//	String jdbc_url = "jdbc:mysql://192.168.1.13:3306/edmond_chat_room";
+//	String username_db = "edmond";
+//	String password_db = "edmond_1216";
+
+	public DBLogin() {
+	}
 
 	public DBLogin(String address, String username_db, String password_db) {
-//		this.jdbc_url = "jdbc:mysql://"+address+":3306/edmond_chat_room\"";
-//		this.username_db = username_db;
-//		this.password_db = password_db;
+		this.jdbc_url = "jdbc:mysql://"+address+":3306/edmond_chat_room";
+		this.username_db = username_db;
+		this.password_db = password_db;
+//		System.out.println(jdbc_url);
 	}
 
 	public boolean validate(String username, String password) {
@@ -39,7 +46,7 @@ public class DBLogin {
 			ResultSet resultset = statement.executeQuery();
 			Boolean valid = resultset.next();
 //			System.out.println(resultset.getString("user_name"));;
-			System.out.println("database query returned "+ valid);
+			System.out.println("database query returned "+valid);
 			resultset.close();
 			statement.close();
 			connection.close();
@@ -154,23 +161,53 @@ public class DBLogin {
 
 	public void acceptMessage(String time, String source, String dest, String message) {
 		if (checkEncryption(source)) {// 选择加密的情况
-			String key = getMessagePw(source);
-			String messageEn = AES.fakeEncryption(message);
+			String skey = getMessagePw(source);
+			String messageEn = AES.encryptWithPw(message, skey);
+			System.out.println(messageEn);
 			storeMessage(time, source, dest, messageEn, true, true);
 		} else {
 			storeMessage(time, source, dest, message, false, true);
 		}
 		if (checkEncryption(dest)) {
-			String key = getMessagePw(dest);
-			String messageEn = AES.fakeEncryption(message);
+			String dkey = getMessagePw(dest);
+			String messageEn = AES.encryptWithPw(message, dkey);
 			storeMessage(time, source, dest, messageEn, true, false);
 		} else {
 			storeMessage(time, source, dest, message, false, false);
 		}
 	}
 
+	public void enableMessagePw(String username, String messagePw) {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
+			String sql = "UPDATE `users` SET `encrypted`= 1,`message_pw`=? WHERE username=?";
+			PreparedStatement statement = connection.prepareStatement(sql);
+			statement.setString(1, messagePw);
+			statement.setString(2, username);
+			statement.execute();
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void disableMessagePw(String username) {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection connection = DriverManager.getConnection(jdbc_url, username_db, password_db);
+			String sql = "UPDATE `users` SET `encrypted`= 0,`message_pw`='' WHERE username=?";
+			PreparedStatement statement = connection.prepareStatement(sql);
+			statement.setString(1, username);
+			statement.execute();
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void main(String[] args) {
-//		new DBLogin();
+		DBLogin db = new DBLogin();
+//		db.enableMessagePw("jam", "jam_password");
+		db.disableMessagePw("edmond");
 //		System.out.println(validate("jam", "dd"));
 //		System.out.println(checkEncryption("jam"));
 //		storeMessage("9:52", "jam", "pet", "school day is good", false, true);

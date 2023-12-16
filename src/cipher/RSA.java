@@ -26,9 +26,9 @@ import javax.crypto.Cipher;
 因此，使用 Base64 编码是加密数据的标准做法，在需要将二进制数据转化为字符串时应当广泛采用。在解密过程中，应当先将加密的 Base64 字符串解码回原始的字节数据，然后再进行解密。这样可以确保数据的安全、完整并保持不变。
 */
 public class RSA {
-	KeyPair pair;
-	PrivateKey privateKey;
-	PublicKey publicKey;
+	private KeyPair pair;
+	private PrivateKey privateKey;
+	private PublicKey publicKey;
 
 	public RSA(int length) {
 		try {

@@ -63,6 +63,7 @@ public class DES {
 	}
 
 	public static void main(String[] args) {
+		//for testing purpose
 		String keyString=DES.generateKey();
 		String messString = "Good morning, EdmondJin! It's a good day";
 		String encryptedMessage = DES.encrypt(messString, keyString);

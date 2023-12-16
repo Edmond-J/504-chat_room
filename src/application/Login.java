@@ -42,13 +42,13 @@ public class Login implements Initializable {
 	static PrintWriter out;
 	static BufferedReader in;
 	@FXML
-	TextField userNameTF;
+	private TextField userNameTF;
 	@FXML
-	PasswordField passwordPF;
+	private PasswordField passwordPF;
 	@FXML
-	ImageView userAvatarIV;
+	private ImageView userAvatarIV;
 	@FXML
-	Label sysMessage;
+	private Label sysMessage;
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -85,7 +85,6 @@ public class Login implements Initializable {
 				userAvatarIV.setImage(new Image(lastUserAvatar));
 			}
 		}
-		setupComm();
 	}
 
 	static public void saveConfigToFile() {
@@ -116,7 +115,7 @@ public class Login implements Initializable {
 		if (!keyFile.exists()) {
 			CipherBox.createKeyFile(algorithm, bit, keyFile);
 		}
-		cipher = new CipherBox(algorithm, bit, keyFile);
+		cipher = new CipherBox(algorithm, keyFile);
 //		String ss=cipher.encrypt("good anmeng");
 //		System.out.println(ss);
 //		System.out.println(cipher.decrypt(ss));
@@ -141,13 +140,14 @@ public class Login implements Initializable {
 
 	@FXML
 	public void login() {
+		setupComm();
 		if (userNameTF.getText().length() == 0 || passwordPF.getText().length() == 0) {
 			System.out.println("user name or password can't be empty");
 			return;
 		}
 		System.out.println("Connecting to server："+serverName+" ，port："+serverPort);
 		System.out.println("Local socket："+client.getLocalSocketAddress());
-		File file = new File(configPath+"server_rsa\\public");
+		File file = new File(configPath+"rsa_server\\publicKey");
 		if (!file.exists()) {
 			requireKey();
 		}
@@ -157,6 +157,7 @@ public class Login implements Initializable {
 
 	private void requireKey() {
 		try {
+			System.out.println("require public key");
 			JsonObject messageObject = new JsonObject();
 			messageObject.addProperty("req_type", "public_key");
 			messageObject.addProperty("user", userNameTF.getText());// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠
@@ -197,7 +198,6 @@ public class Login implements Initializable {
 			jsonToSend.addProperty("body", bodyTxEn);
 			out.println(gson.toJson(jsonToSend));
 			String response = in.readLine();
-			System.out.println(response);
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
 			if (resType.contains("200:login_succeed")) {
@@ -236,11 +236,13 @@ public class Login implements Initializable {
 //		// 收到token则启动聊天界面
 //	}
 
-	static public void releaseResource() throws IOException {
-		Login.out.println("log_out");
-		Login.in.close();
-		Login.out.close();
-		Login.client.close();
+	static public void releaseResource(String req) throws IOException {
+		if (out != null) {
+			Login.out.println(req);
+			Login.in.close();
+			Login.out.close();
+			Login.client.close();
+		}
 	}
 
 	private void loadChatPage(String currentUser, boolean isEncrypted, String token, ArrayList<Friend> friendList) {
@@ -251,11 +253,33 @@ public class Login implements Initializable {
 			Scene scene = new Scene(loader.load());
 			Stage newStage = new Stage();
 			newStage.setScene(scene);
+			newStage.setTitle("Edmond ChatRoom");
+			newStage.getIcons().add(new Image("file:../../img/chat.png"));
 			ChatController chatController = loader.getController();
 			chatController.setFields(currentUser, isEncrypted, token, friendList);
+			chatController.buildUI();
 			chatController.setupPortListener();
 			newStage.show();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void sendJson() {
+		JsonObject message = new JsonObject();
+		message.addProperty("user", "user");
+		File keyFile = new File(configPath+"symmetric\\"+userNameTF.getText()+"\\"+algorithm+"-"+bit);
+		message.addProperty("key", ReadWrite.readStringFromFile(keyFile));
+		Gson gson = new Gson();
+		String bodyTx = gson.toJson(message);
+		String bodyTxEn;
+		try {
+			bodyTxEn = RSA.encrypt(bodyTx, RSA.getPublicFromFile(configPath+"rsa_server\\publicKey"));
+			JsonObject jsonToSend = new JsonObject();
+			jsonToSend.addProperty("req_type", "validate");
+			jsonToSend.addProperty("body", bodyTxEn);
+			out.println(gson.toJson(jsonToSend));
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

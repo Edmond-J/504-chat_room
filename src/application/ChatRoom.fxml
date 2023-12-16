@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.ChatController">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@application.css" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.ChatController">
   <columnConstraints>
     <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="457.14288330078125" minWidth="10.0" prefWidth="457.14288330078125" />
     <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="NEVER" maxWidth="150.0" minWidth="150.0" prefWidth="150.0" />
@@ -30,12 +30,12 @@
          <children>
             <Label prefHeight="30.0" prefWidth="33.0" text="to :" textFill="WHITE">
                <font>
-                  <Font name="Centaur" size="24.0" />
+                  <Font name="Cambria" size="24.0" />
                </font>
             </Label>
-            <Label fx:id="destUser" prefHeight="30.0" prefWidth="118.0" textFill="WHITE">
+            <Label fx:id="destUser" prefHeight="30.0" prefWidth="134.0" textFill="WHITE">
                <font>
-                  <Font name="Centaur" size="24.0" />
+                  <Font name="Cambria" size="24.0" />
                </font>
             </Label>
             <Pane prefHeight="50.0" prefWidth="279.0" HBox.hgrow="ALWAYS" />
@@ -49,19 +49,25 @@
             <Insets left="15.0" right="15.0" />
          </padding>
       </HBox>
-      <TextArea fx:id="talkHistory" editable="false" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="1">
-         <GridPane.margin>
-            <Insets left="10.0" right="10.0" top="10.0" />
-         </GridPane.margin>
-      </TextArea>
-      <TextArea fx:id="editor" prefHeight="200.0" prefWidth="200.0" GridPane.rowIndex="2">
+      <TextArea fx:id="talkHistory" editable="false" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.rowIndex="1">
          <GridPane.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
+         <font>
+            <Font name="Microsoft YaHei" size="13.0" />
+         </font>
+      </TextArea>
+      <TextArea fx:id="editor" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.rowIndex="2">
+         <GridPane.margin>
+            <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+         </GridPane.margin>
+         <font>
+            <Font name="Microsoft YaHei" size="13.0" />
+         </font>
       </TextArea>
       <VBox onDragDetected="#exit" prefHeight="351.0" prefWidth="140.0" spacing="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.rowSpan="2147483647">
          <children>
-            <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
                   <ImageView fx:id="currentAvatar" fitHeight="35.0" fitWidth="35.0" pickOnBounds="true" preserveRatio="true">
                      <HBox.margin>
@@ -71,9 +77,9 @@
                         <Image url="@../../img/user.png" />
                      </image>
                   </ImageView>
-                  <Label fx:id="sourceUser" prefHeight="30.0" prefWidth="118.0" text="User Name">
+                  <Label fx:id="sourceUser" prefHeight="30.0" prefWidth="118.0" text="User Name" textFill="#454d66">
                      <font>
-                        <Font name="Centaur" size="20.0" />
+                        <Font name="Cambria" size="20.0" />
                      </font>
                   </Label>
                </children>

@@ -3,13 +3,13 @@ package cipher;
 import java.io.File;
 
 public class CipherBox {
-	String algorithm;
-	int bit;
-	File file;
+	private String algorithm;
+//	private int bit;
+	private File file;
 
-	public CipherBox(String algorithm, int bit, File file) {
+	public CipherBox(String algorithm, File file) {
 		this.algorithm = algorithm;
-		this.bit = bit;
+//		this.bit = bit;
 		this.file = file;
 		// 检查密钥是否存在
 	}

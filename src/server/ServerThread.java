@@ -24,26 +24,20 @@ import dataStructure.User;
 public class ServerThread extends Thread implements Runnable {
 	Socket socket;
 	DBLogin db;
-	BufferedReader in;
-	PrintWriter out;
 	User thisUser;
 
 	public ServerThread(Socket socket, DBLogin db) {
 		this.socket = socket;
 		this.db = db;
-		try {
-			InputStreamReader inputStream = new InputStreamReader(socket.getInputStream());
-			in = new BufferedReader(inputStream);
-			out = new PrintWriter(socket.getOutputStream(), true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	public void run() {
 		String req;
 		try {
+			InputStreamReader inputStream = new InputStreamReader(socket.getInputStream());
+			BufferedReader in = new BufferedReader(inputStream);
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 			while ((req = in.readLine()) != null) {
 				Gson gson = new Gson();
 				if (req.contains("public_key")) {
@@ -95,13 +89,14 @@ public class ServerThread extends Thread implements Runnable {
 							String jsonList = gson.toJson(allFriends, new TypeToken<ArrayList<Friend>>() {
 							}.getType());
 							messageObject.addProperty("friends", jsonList);
+//							System.out.println(messageObject.toString());
 							String bodyTxEn = CipherBox.encrypt(gson.toJson(messageObject), algorithm, key);
 							JsonObject jsonToSend = new JsonObject();
 							jsonToSend.addProperty("res_type", "200:login_succeed");
 							jsonToSend.addProperty("body", bodyTxEn);
 							out.println(gson.toJson(jsonToSend));
 							onlineBroadcast(username);
-							System.out.println(username+" is on line");
+							System.out.println(username+" is online. total active user: "+Server.onlineUsers.size());
 						} else {
 							JsonObject messageObject = new JsonObject();
 							messageObject.addProperty("res_type", "300:invalid_combination");
@@ -110,12 +105,11 @@ public class ServerThread extends Thread implements Runnable {
 						}
 					}
 				}
-				if (req.contains("message")) {
+				if (req.contains("user_message")) {
 					JsonObject rawJson = gson.fromJson(req, JsonObject.class);
 					String sourceUser = rawJson.get("source").getAsString();
 					String encryBody = rawJson.get("body").getAsString();
 					String decryBody = CipherBox.decrypt(encryBody, thisUser.getAlgorithm(), thisUser.getKey());
-					System.out.println("107"+thisUser.getKey());
 					JsonObject jsonObject = gson.fromJson(decryBody, JsonObject.class);
 					String token = jsonObject.get("token").getAsString();
 					String dest = jsonObject.get("dest").getAsString();
@@ -144,14 +138,30 @@ public class ServerThread extends Thread implements Runnable {
 					JsonObject jsonToSend = new JsonObject();
 					jsonToSend.addProperty("res_type", "paging");
 					jsonToSend.addProperty("body", bodyTxEn);
-					PrintWriter out = new PrintWriter(destSocket.getOutputStream(), true);
+					out = new PrintWriter(destSocket.getOutputStream(), true);
 					out.println(gson.toJson(jsonToSend));
 					db.acceptMessage(currentTime, sourceUser, dest, message);
 				}
+				if (req.contains("enable_encrypt_message")) {
+					JsonObject rawJson = gson.fromJson(req, JsonObject.class);
+					String encryBody = rawJson.get("message_pw").getAsString();
+					String messagePw = CipherBox.decrypt(encryBody, thisUser.getAlgorithm(), thisUser.getKey());
+					db.enableMessagePw(thisUser.getUsername(), messagePw);
+				}
+				if (req.contains("disable_encrypt_message")) {
+					db.disableMessagePw(thisUser.getUsername());
+				}
 				if (req.contains("log_out")) {
 					offlineBroadcast(thisUser.getUsername());
-					System.out.println(thisUser.getUsername()+" is offline");
 					Server.onlineUsers.remove(thisUser);
+					System.out.println(
+							thisUser.getUsername()+" is offline, total active user: "+Server.onlineUsers.size());
+					in.close();
+					out.close();
+					socket.close();
+					break;
+				}
+				if (req.contains("give_up")) {
 					in.close();
 					out.close();
 					socket.close();
@@ -173,23 +183,38 @@ public class ServerThread extends Thread implements Runnable {
 	}
 
 	private void onlineBroadcast(String username) {
-		for (User user : Server.onlineUsers) {
-			try {
-				PrintWriter out = new PrintWriter(user.getSocket().getOutputStream(), true);
-				JsonObject messageObject = new JsonObject();
-				messageObject.addProperty("res_type", "online_broadcast");
-				messageObject.addProperty("new_user", username);
-				Gson gson = new Gson();
-				System.out.println(user.getSocket().getLocalSocketAddress());
-				System.out.println(gson.toJson(messageObject));
-				out.print(gson.toJson(messageObject));
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			for (User user : Server.onlineUsers) {
+				if (!user.equals(thisUser)) {
+					PrintWriter out = new PrintWriter(user.getSocket().getOutputStream(), true);
+					JsonObject messageObject = new JsonObject();
+					messageObject.addProperty("res_type", "online_broadcast");
+					messageObject.addProperty("user", username);
+					Gson gson = new Gson();
+					out.println(gson.toJson(messageObject));
+					out.flush();
+				}
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
-	
+
 	private void offlineBroadcast(String username) {
-		
+		try {
+			for (User user : Server.onlineUsers) {
+				if (!user.equals(thisUser)) {
+					PrintWriter out = new PrintWriter(user.getSocket().getOutputStream(), true);
+					JsonObject messageObject = new JsonObject();
+					messageObject.addProperty("res_type", "offline_broadcast");
+					messageObject.addProperty("user", username);
+					Gson gson = new Gson();
+					out.println(gson.toJson(messageObject));
+					out.flush();
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

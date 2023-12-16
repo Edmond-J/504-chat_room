@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import dataStructure.Friend;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,12 +24,12 @@ import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 
 public class ChatController {
-	String currentUser;
-	String peerUser;
-	boolean isEncrypted;
-	String token;
-	ArrayList<Friend> friendList;
-	volatile boolean isrunning = true;
+	private String currentUser;
+	private String peerUser;
+	private boolean isEncrypted;
+	private String token;
+	private ArrayList<Friend> friendList;
+	private volatile boolean isrunning = true;
 	@FXML
 	private ImageView currentAvatar, setting;
 	@FXML
@@ -47,47 +48,47 @@ public class ChatController {
 		this.friendList = friendList;
 	}
 
-	public void buildUI(ArrayList<Friend> friendList) {
+	public void buildUI() {
 		Stage stage = (Stage)sendButton.getScene().getWindow();
-		stage.setOnCloseRequest(e -> {
+		stage.setOnCloseRequest(event -> {
 			try {
 				exit();
-			} catch (IOException e1) {
-				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			System.out.println("close chat");
 		});
 		sourceUser.setText(currentUser);
-		this.friendList = friendList;
-		ObservableList<Friend> friends = FXCollections.observableArrayList();
-		int activeUser = 0;
-		for (Friend user : friendList) {
-			if (!user.getName().equals(currentUser)) {
-				friends.add(user);
-				if (user.isOnline()) {
-					activeUser++;
-				}
-			}
-		}
-		userCount.setText("Active Friends:  ("+activeUser+"/"+(friendList.size()-1)+")");
-		userList.setCellFactory(lv -> new ListCell<Friend>() {
-			@Override
-			protected void updateItem(Friend friend, boolean empty) {
-				super.updateItem(friend, empty);
-				if (empty || friend == null) {
-					setText(null);
-					setStyle("");
-				} else {
-					setText(friend.getName());
-					if (!friend.isOnline()) {
-						setStyle("-fx-text-fill: gray;");
-					} else {
-						setStyle("-fx-text-fill: blue;");
+		Platform.runLater(() -> {
+			ObservableList<Friend> friends = FXCollections.observableArrayList();
+			int activeUser = 0;
+			for (Friend user : friendList) {
+				if (!user.getName().equals(currentUser)) {
+					friends.add(user);
+					if (user.isOnline()) {
+						activeUser++;
 					}
 				}
 			}
+			userCount.setText("Active Friends:  ("+activeUser+"/"+(friendList.size()-1)+")");
+			userList.setCellFactory(lv -> new ListCell<Friend>() {
+				@Override
+				protected void updateItem(Friend friend, boolean empty) {
+					super.updateItem(friend, empty);
+					if (empty || friend == null) {
+						setText(null);
+						setStyle("");
+					} else {
+						setText(friend.getName());
+						if (!friend.isOnline()) {
+							setStyle("-fx-text-fill: gray;");
+						} else {
+							setStyle("-fx-text-fill: blue;");
+						}
+					}
+				}
+			});
+			userList.setItems(friends);
 		});
-		userList.setItems(friends);
 		userList.getSelectionModel().selectedItemProperty()
 				.addListener((ObservableValue<? extends Friend> observable, Friend oldValue, Friend newValue) -> {
 //					System.out.println("Selected item: "+newValue.getUsername());
@@ -107,7 +108,7 @@ public class ChatController {
 		}).start();
 	}
 
-	public void portListener() {
+	private void portListener() {
 		try {
 			Gson gson = new Gson();
 			String response = Login.in.readLine();
@@ -117,14 +118,22 @@ public class ChatController {
 			JsonObject jsonObject = gson.fromJson(response, JsonObject.class);
 			String resType = jsonObject.get("res_type").getAsString();
 			if (resType.contains("online_broadcast")) {
-				System.out.println("new user");
-				String newUser = jsonObject.get("new_user").getAsString();
+				String user = jsonObject.get("user").getAsString();
 				for (Friend friend : friendList) {
-					if (friend.getName().equals(newUser)) {
+					if (friend.getName().equals(user)) {
 						friend.setOnline(true);
 					}
 				}
-				buildUI(friendList);
+				buildUI();
+			}
+			if (resType.contains("offline_broadcast")) {
+				String user = jsonObject.get("user").getAsString();
+				for (Friend friend : friendList) {
+					if (friend.getName().equals(user)) {
+						friend.setOnline(false);
+					}
+				}
+				buildUI();
 			}
 			if (resType.contains("paging")) {
 				String bodyRx = jsonObject.get("body").getAsString();
@@ -144,12 +153,12 @@ public class ChatController {
 
 	@FXML
 	private void showAccountSetting() {
-		AccountController ac = new AccountController(isEncrypted);
+		AccountController ac = new AccountController(this);
 		ac.show();
 	}
 
 	@FXML
-	public void sendMessage() {
+	private void sendMessage() {
 		if (editor.getText().length() == 0 || peerUser == null) {
 			return;
 		}
@@ -161,7 +170,7 @@ public class ChatController {
 		Gson gson = new Gson();
 		String bodyTxEn = Login.cipher.encrypt(gson.toJson(messageObject));
 		JsonObject jsonToSend = new JsonObject();
-		jsonToSend.addProperty("req_type", "message");
+		jsonToSend.addProperty("req_type", "user_message");
 		jsonToSend.addProperty("source", currentUser);// 加入user为了防止恶意攻击,需要用一个合理的user身份证明，使用用户输入值不可靠
 		jsonToSend.addProperty("body", bodyTxEn);
 		PrintWriter out;
@@ -180,11 +189,26 @@ public class ChatController {
 	}
 
 	@FXML
-	public void exit() throws IOException {
+	private void exit() throws IOException {
 		isrunning = false;
-		System.out.println("167 client logout");
-		Login.releaseResource();
+		Login.releaseResource("log_out");
 		Stage stage = (Stage)userList.getScene().getWindow();
 		stage.close();
+	}
+
+	public boolean isEncrypted() {
+		return isEncrypted;
+	}
+
+	public void setEncrypted(boolean isEncrypted) {
+		this.isEncrypted = isEncrypted;
+	}
+
+	public String getCurrentUser() {
+		return currentUser;
+	}
+
+	public String getToken() {
+		return token;
 	}
 }

@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 
 
 public class ClientLauncher extends Application {
@@ -17,9 +18,11 @@ public class ClientLauncher extends Application {
 			Scene scene = new Scene(login, 400, 300);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
+			primaryStage.setTitle("Edmond ChatRoom");
+			primaryStage.getIcons().add(new Image("file:../../img/chat.png"));
 			primaryStage.setOnCloseRequest(event->{
 				try {
-					Login.releaseResource();
+					Login.releaseResource("give_up");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

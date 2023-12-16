@@ -15,7 +15,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class ConnectController implements Initializable {
-	Scene scene;
+	private Scene scene;
 	@FXML
 	private ComboBox<String> encryptCB;
 	@FXML
