@@ -91,12 +91,14 @@ public class ChatController {
 		});
 		userList.getSelectionModel().selectedItemProperty()
 				.addListener((ObservableValue<? extends Friend> observable, Friend oldValue, Friend newValue) -> {
+					if (newValue != null) {
 //					System.out.println("Selected item: "+newValue.getUsername());
-					peerUser = newValue.getName();
-					destUser.setText(peerUser);
-					if (newValue.isOnline())
-						sendButton.setDisable(false);
-					else sendButton.setDisable(true);
+						peerUser = newValue.getName();
+						destUser.setText(peerUser);
+						if (newValue.isOnline())
+							sendButton.setDisable(false);
+						else sendButton.setDisable(true);
+					}
 				});
 	}
 

@@ -81,6 +81,8 @@ public class AccountController implements Initializable {
 				feedbackLabel.setText("password has to be longer than 3");
 			} else if (!pwTF.getText().equals(pwConPF.getText())) {
 				feedbackLabel.setText("password is not match");
+			} else if (pwTF.getText().matches(".*[!@#$%^&*(){}:;'\"].*")) {
+				feedbackLabel.setText("invalid symbols:!@#$%^&*(){}:;'\"");
 			} else {
 				chatController.setEncrypted(true);
 				feedbackLabel.setText("password updated");

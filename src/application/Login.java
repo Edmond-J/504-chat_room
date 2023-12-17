@@ -52,14 +52,14 @@ public class Login implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		userNameTF.setText("jam");
-		passwordPF.setText("jam");
+//		userNameTF.setText("jam");
+//		passwordPF.setText("jam");
 		configPath = System.getProperty("user.home")+"\\EdmondChatRoom\\";
 		String lastUser = "jam";
 		String lastUserAvatar = "";
 		File clientConfigFile = new File(configPath+"config.json");
 		if (!clientConfigFile.exists()) {
-			serverName = "Localhost";
+			serverName = "161.65.83.227";
 			serverPort = 6069;
 			algorithm = "AES";
 			bit = 128;
@@ -142,9 +142,18 @@ public class Login implements Initializable {
 	public void login() {
 		setupComm();
 		if (userNameTF.getText().length() == 0 || passwordPF.getText().length() == 0) {
-			System.out.println("user name or password can't be empty");
+			sysMessage.setText("error: user name or password can't be empty");
 			return;
 		}
+		if (userNameTF.getText().length()+passwordPF.getText().length() >= 30) {
+			sysMessage.setText("error: user input exceeds maximum limit");
+			return;
+		}
+		if (userNameTF.getText().matches(".*[!@#$%^&*(){}:;'\"].*")) {
+			sysMessage.setText("error: invalid symbols: !@#$%^&*(){}:;'\"");
+			return;
+		}
+		sysMessage.setText("connecting to server...");
 		System.out.println("Connecting to server："+serverName+" ，port："+serverPort);
 		System.out.println("Local socket："+client.getLocalSocketAddress());
 		File file = new File(configPath+"rsa_server\\publicKey");
@@ -225,16 +234,6 @@ public class Login implements Initializable {
 			e.printStackTrace();
 		}
 	}
-//	private void negotiage(Socket client) {
-//		JsonObject messageObject = new JsonObject();
-//		messageObject.addProperty("req_type", "negotiate");
-//		messageObject.addProperty("user", userName.getText());// 可以使用服务器发来的token
-//		messageObject.addProperty("algorithm", algorithm);
-//		messageObject.addProperty("bit", bit);
-//		Gson gson = new Gson();
-//		out.println(gson.toJson(messageObject));
-//		// 收到token则启动聊天界面
-//	}
 
 	static public void releaseResource(String req) throws IOException {
 		if (out != null) {
