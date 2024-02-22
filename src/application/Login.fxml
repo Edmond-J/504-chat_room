@@ -18,7 +18,7 @@
       <Button layoutX="221.0" layoutY="225.0" mnemonicParsing="false" onAction="#loadSettingPage" prefWidth="80.0" text="Setting" />
       <ImageView fx:id="userAvatarIV" fitHeight="60.0" fitWidth="60.0" layoutX="58.0" layoutY="105.0" pickOnBounds="true" preserveRatio="true">
          <image>
-            <Image url="@../../img/user.png" />
+            <Image url="@../img/user.png" />
          </image>
       </ImageView>
       <Label layoutX="180.0" layoutY="81.0" text="User Name" />

@@ -19,7 +19,7 @@ public class ClientLauncher extends Application {
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.setTitle("Edmond ChatRoom");
-			primaryStage.getIcons().add(new Image("file:../../img/chat.png"));
+			primaryStage.getIcons().add(new Image("file:../img/chat.png"));
 			primaryStage.setOnCloseRequest(event->{
 				try {
 					Login.releaseResource("give_up");

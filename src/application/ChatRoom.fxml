@@ -41,7 +41,7 @@
             <Pane prefHeight="50.0" prefWidth="279.0" HBox.hgrow="ALWAYS" />
             <ImageView fx:id="setting" fitHeight="30.0" fitWidth="30.0" onMouseClicked="#showAccountSetting" pickOnBounds="true" preserveRatio="true">
                <image>
-                  <Image url="@../../img/settings.png" />
+                  <Image url="@../img/settings.png" />
                </image>
             </ImageView>
          </children>
@@ -74,7 +74,7 @@
                         <Insets />
                      </HBox.margin>
                      <image>
-                        <Image url="@../../img/user.png" />
+                        <Image url="@../img/user.png" />
                      </image>
                   </ImageView>
                   <Label fx:id="sourceUser" prefHeight="30.0" prefWidth="118.0" text="User Name" textFill="#454d66">
