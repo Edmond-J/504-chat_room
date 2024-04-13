@@ -1,7 +1,8 @@
 # <font color=mediumaquamarine>Edmond Chat Room </font>
 ## Introduction:
-This is an assignment of **SWEN504 Security & Cloud.**   
-It's an instant messaging system that allows multiple users to login at the same time and send point to point messages between each other through the server. The message will be presented on the peer user's client UI and stored in the database in encrypted/plain text according to the user's settings. The server is responsible for authenticating users, reading/writing databases, forwarding user messages, online user management, on/offline notifications, etc. The client is responsible for the generating and managing user's symmetric key, the front-end validation of the user's input, and the display and management of the friend list. Encryption of sensitive information is achieved throughout the communication process, and security requirements are maximized in static storage.   
+This is a personal project sparked by my interest after completing courses in **Security & Cloud.**  
+The goal is to integrate all the knowledge acquired into one project, including symmetric encryption, asymmetric encryption, message digest, HTTP, TCP/IP, socket programming, client/server architecture, cloud services, databases... Therefore, developing an encrypted instant messaging software seems to be the only project that covers all these aspects.  
+This instant messaging system allows multiple users to login at the same time and send point to point messages between each other through the server. The message will be presented on the peer user's client UI and stored in the database in encrypted/plain text according to the user's settings. The server is responsible for authenticating users, reading/writing databases, forwarding user messages, online user management, on/offline notifications, etc. The client is responsible for the generating and managing user's symmetric key, the front-end validation of the user's input, and the display and management of the friend list. Encryption of sensitive information is achieved throughout the communication process, and security requirements are maximized in static storage.   
 Please check the YouTube video for demonstration:  
 [Chat Room Demonstration](https://www.youtube.com/watch?v=6Oa8CeEawFI)
 
@@ -53,7 +54,7 @@ To run the application in your local machine, please follow the steps below:
 | pet | pet |
 | edmond | edmond |
 
-## API Design
+## Protocol Design
 | API |	From |	To | Trigger Condition | Payload| 
 | ------- | -----| --- | ---------------- | ------------------------ |
 | public_key | client | server | If server's public key does not exist in client's end | username |
